@@ -12,7 +12,9 @@ const router = Router();
 
 router.get('/all', ctrlWrapper(getAllProductsController));
 
+// тимчасово
 router.post('/all', ctrlWrapper(createProductController));
+//
 
 router.get(
   '/:productId',
@@ -20,6 +22,6 @@ router.get(
   ctrlWrapper(getProductByIdController),
 );
 
-router.get('/category', ctrlWrapper(getProductsByCategoryController));
+router.get('/all/category', ctrlWrapper(getProductsByCategoryController));
 
 export default router;

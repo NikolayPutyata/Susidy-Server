@@ -11,13 +11,13 @@ export const getCart = async (session_id) => {
   return cart;
 };
 
-export const addToCart = async (
+export const addToCart = async ({
   session_id,
   product_id,
   quantity,
   productName,
   price,
-) => {
+}) => {
   let cart = await CartsCollection.findOneAndUpdate(
     { session_id, 'items.product_id': product_id },
     { $inc: { 'items.$.quantity': quantity } },
@@ -39,7 +39,27 @@ export const addToCart = async (
   return cart;
 };
 
-export const createOrder = async (session_id, name, phoneNumber) => {
+export const updateCart = async ({ session_id, product_id, quantity }) => {
+  const updatedCart = await CartsCollection.findOneAndUpdate(
+    { session_id, 'items.product_id': product_id },
+    { $set: { 'items.$.quantity': quantity } },
+    { new: true },
+  );
+
+  return updatedCart;
+};
+
+export const removeItemFromCart = async ({ session_id, product_id }) => {
+  const updatedCart = await CartsCollection.findOneAndUpdate(
+    { session_id },
+    { $pull: { items: { product_id } } },
+    { new: true },
+  );
+
+  return updatedCart;
+};
+
+export const createOrder = async ({ session_id, name, phoneNumber }) => {
   const cart = await CartsCollection.findOne({ session_id });
 
   if (!cart) {

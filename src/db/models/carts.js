@@ -2,7 +2,7 @@ import { model, Schema } from 'mongoose';
 
 const cartSchema = new Schema(
   {
-    user_id: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    user_id: { type: String, required: true },
     session_id: { type: String, required: true },
     items: [
       {

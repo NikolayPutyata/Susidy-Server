@@ -2,7 +2,7 @@ import { model, Schema } from 'mongoose';
 
 const orderSchema = new Schema(
   {
-    user_id: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    user_id: { type: Schema.Types.ObjectId },
     session_id: { type: String, required: true },
     name: { type: String, required: true },
     phoneNumber: { type: Number, required: true },
