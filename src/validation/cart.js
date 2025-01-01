@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
 export const addToCartValidSchema = Joi.object({
-  session_id: Joi.string().required(),
+  session_id: Joi.string(),
   product_id: Joi.string().required(),
   quantity: Joi.number().min(1).required(),
   productName: Joi.string().min(3).required(),
@@ -9,7 +9,7 @@ export const addToCartValidSchema = Joi.object({
 });
 
 export const checkoutValidSchema = Joi.object({
-  session_id: Joi.string().required(),
+  session_id: Joi.string(),
   name: Joi.string().required(),
   phoneNumber: Joi.string()
     .pattern(/^[0-9]{10}$/)
@@ -17,12 +17,12 @@ export const checkoutValidSchema = Joi.object({
 });
 
 export const updateCartValidSchema = Joi.object({
-  session_id: Joi.string().required(),
+  session_id: Joi.string(),
   product_id: Joi.string().required(),
   quantity: Joi.number().min(1).required(),
 });
 
 export const deleteCartItemValidSchema = Joi.object({
-  session_id: Joi.string().required(),
+  session_id: Joi.string(),
   product_id: Joi.string().required(),
 });

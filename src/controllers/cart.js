@@ -7,11 +7,11 @@ import {
 } from '../services/cart.js';
 
 export const getCartController = async (req, res) => {
-  const { session_id } = req.params;
+  const { cart_id } = req.params;
 
-  const cart = await getCart(session_id);
+  const cart = await getCart(cart_id);
 
-  res.status(200).json({ status: 200, session_id, data: cart });
+  res.status(200).json({ status: 200, cart_id, data: cart });
 };
 
 export const addToCartController = async (req, res) => {
@@ -23,7 +23,7 @@ export const addToCartController = async (req, res) => {
     price: req.body.price,
   };
 
-  const cart = await addToCart(reqData);
+  const cart = await addToCart(reqData, req.user);
 
   res.status(200).json({
     status: 200,
@@ -39,7 +39,7 @@ export const patchCartController = async (req, res) => {
     quantity: req.body.quantity,
   };
 
-  const updatedCart = await updateCart(reqData);
+  const updatedCart = await updateCart(reqData, req.user);
 
   res.status(200).json({
     status: 200,
@@ -54,7 +54,7 @@ export const deleteCartItemController = async (req, res) => {
     product_id: req.body.product_id,
   };
 
-  const updatedCart = await removeItemFromCart(reqData);
+  const updatedCart = await removeItemFromCart(reqData, req.user);
 
   res.status(200).json({
     status: 200,
@@ -70,7 +70,7 @@ export const createOrderController = async (req, res) => {
     phoneNumber: req.body.phoneNumber,
   };
 
-  const order = await createOrder(reqData);
+  const order = await createOrder(reqData, req.user);
 
   res.status(201).json({ status: 201, data: order });
 };

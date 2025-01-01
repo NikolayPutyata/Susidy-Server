@@ -20,7 +20,7 @@ const router = Router();
 
 router.use(authentication);
 
-router.get('/:session_id', ctrlWrapper(getCartController));
+router.get('/:cart_id', ctrlWrapper(getCartController));
 
 router.post(
   '/add',

@@ -3,7 +3,8 @@ import { model, Schema } from 'mongoose';
 const productSchema = new Schema(
   {
     name: { type: String, required: true },
-    price: { type: Number, required: true },
+    priceKiev: { type: Number, required: true },
+    priceKharkov: { type: Number, required: true },
     category: {
       type: String,
       enum: [
