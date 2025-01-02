@@ -68,6 +68,8 @@ export const createOrderController = async (req, res) => {
     session_id: req.body.session_id,
     name: req.body.name,
     phoneNumber: req.body.phoneNumber,
+    delivery: req.body.delivery,
+    details: req.body.details,
   };
 
   const order = await createOrder(reqData, req.user);

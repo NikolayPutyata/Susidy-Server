@@ -6,6 +6,8 @@ const orderSchema = new Schema(
     session_id: { type: String },
     name: { type: String, required: true },
     phoneNumber: { type: String, required: true },
+    delivery: { type: String },
+    details: { type: String },
     items: [
       {
         product_id: String,

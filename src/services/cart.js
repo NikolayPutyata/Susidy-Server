@@ -72,7 +72,10 @@ export const removeItemFromCart = async ({ session_id, product_id }, user) => {
   return updatedCart;
 };
 
-export const createOrder = async ({ session_id, name, phoneNumber }, user) => {
+export const createOrder = async (
+  { session_id, name, phoneNumber, delivery, details },
+  user,
+) => {
   const criteria = user ? { user_id: user._id } : { session_id };
 
   const cart = await CartsCollection.findOne(criteria);
@@ -86,6 +89,8 @@ export const createOrder = async ({ session_id, name, phoneNumber }, user) => {
     session_id,
     name,
     phoneNumber,
+    delivery,
+    details,
     items: cart.items,
     total: cart.items.reduce(
       (sum, item) => sum + item.quantity * item.price,

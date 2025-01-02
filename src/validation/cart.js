@@ -14,6 +14,8 @@ export const checkoutValidSchema = Joi.object({
   phoneNumber: Joi.string()
     .pattern(/^[0-9]{10}$/)
     .required(),
+  delivery: Joi.string(),
+  details: Joi.string(),
 });
 
 export const updateCartValidSchema = Joi.object({
