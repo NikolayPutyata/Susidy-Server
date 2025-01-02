@@ -72,16 +72,6 @@ export const removeItemFromCart = async ({ session_id, product_id }, user) => {
   return updatedCart;
 };
 
-// export const removeItemFromCart = async ({ session_id, product_id }, user) => {
-//   const updatedCart = await CartsCollection.findOneAndUpdate(
-//     { session_id },
-//     { $pull: { items: { product_id } } },
-//     { new: true },
-//   );
-
-//   return updatedCart;
-// };
-
 export const createOrder = async ({ session_id, name, phoneNumber }, user) => {
   const criteria = user ? { user_id: user._id } : { session_id };
 

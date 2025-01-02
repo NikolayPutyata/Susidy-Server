@@ -5,7 +5,7 @@ const orderSchema = new Schema(
     user_id: { type: Schema.Types.ObjectId },
     session_id: { type: String },
     name: { type: String, required: true },
-    phoneNumber: { type: Number, required: true },
+    phoneNumber: { type: String, required: true },
     items: [
       {
         product_id: String,
@@ -18,5 +18,7 @@ const orderSchema = new Schema(
   },
   { timestamps: true, versionKey: false },
 );
+
+orderSchema.index({ createdAt: 1 }, { expireAfterSeconds: 31536000 });
 
 export const OrdersCollection = model('orders', orderSchema);
