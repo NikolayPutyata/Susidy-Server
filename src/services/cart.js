@@ -4,6 +4,18 @@ import { OrdersCollection } from '../db/models/orders.js';
 import { sendOrderToTelegram } from '../utils/telegramSender.js';
 import { findOrCreateUserByPhone } from './users.js';
 
+const getCartCriteria = (user, session_id, extra = {}) => {
+  if (user) {
+    return { user_id: user._id, ...extra };
+  }
+
+  if (!session_id) {
+    throw createHttpError(400, 'session_id is required for a guest cart');
+  }
+
+  return { session_id, ...extra };
+};
+
 export const getCart = async (cart_id) => {
   const cart = await CartsCollection.findById(cart_id);
 
@@ -18,9 +30,9 @@ export const addToCart = async (
   { session_id, product_id, quantity, productName, price },
   user,
 ) => {
-  const criteria = user
-    ? { user_id: user._id, 'items.product_id': product_id }
-    : { session_id, 'items.product_id': product_id };
+  const criteria = getCartCriteria(user, session_id, {
+    'items.product_id': product_id,
+  });
 
   let cart = await CartsCollection.findOneAndUpdate(
     criteria,
@@ -29,7 +41,7 @@ export const addToCart = async (
   );
 
   if (!cart) {
-    const fallbackCriteria = user ? { user_id: user._id } : { session_id };
+    const fallbackCriteria = getCartCriteria(user, session_id);
     cart = await CartsCollection.findOneAndUpdate(
       fallbackCriteria,
       {
@@ -48,9 +60,9 @@ export const updateCart = async (
   { session_id, product_id, quantity },
   user,
 ) => {
-  const criteria = user
-    ? { user_id: user._id, 'items.product_id': product_id }
-    : { session_id, 'items.product_id': product_id };
+  const criteria = getCartCriteria(user, session_id, {
+    'items.product_id': product_id,
+  });
 
   const updatedCart = await CartsCollection.findOneAndUpdate(
     criteria,
@@ -62,7 +74,7 @@ export const updateCart = async (
 };
 
 export const removeItemFromCart = async ({ session_id, product_id }, user) => {
-  const criteria = user ? { user_id: user._id } : { session_id };
+  const criteria = getCartCriteria(user, session_id);
 
   const updatedCart = await CartsCollection.findOneAndUpdate(
     criteria,
@@ -77,7 +89,7 @@ export const createOrder = async (
   { session_id, name, phoneNumber, delivery, details },
   user,
 ) => {
-  const criteria = user ? { user_id: user._id } : { session_id };
+  const criteria = getCartCriteria(user, session_id);
 
   const cart = await CartsCollection.findOne(criteria);
 

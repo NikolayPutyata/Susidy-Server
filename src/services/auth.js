@@ -1,6 +1,7 @@
 import createHttpError from 'http-errors';
 import { UsersCollection } from '../db/models/user.js';
 import bcrypt from 'bcrypt';
+import { isValidObjectId } from 'mongoose';
 import { SessionsCollection } from '../db/models/sessions.js';
 import { randomBytes } from 'crypto';
 import {
@@ -92,6 +93,10 @@ const createSession = () => {
 };
 
 export const refreshUsersSession = async ({ sessionId, refreshToken }) => {
+  if (!sessionId || !refreshToken || !isValidObjectId(sessionId)) {
+    throw createHttpError(401, 'Session not found');
+  }
+
   const session = await SessionsCollection.findOne({
     _id: sessionId,
     refreshToken,
