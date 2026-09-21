@@ -7,6 +7,7 @@ import {
   requestResetToken,
   resetPassword,
 } from '../services/auth.js';
+import { getSessionCookieOptions } from '../utils/cookies.js';
 
 export const registerUserController = async (req, res) => {
   const reqData = {
@@ -31,11 +32,11 @@ export const loginUserController = async (req, res) => {
   const session = await loginUser(reqData);
 
   res.cookie('refreshToken', session.refreshToken, {
-    httpOnly: true,
+    ...getSessionCookieOptions(),
     expires: new Date(Date.now() + ONE_MONTH),
   });
   res.cookie('sessionId', session._id, {
-    httpOnly: true,
+    ...getSessionCookieOptions(),
     expires: new Date(Date.now() + ONE_MONTH),
   });
 
@@ -53,19 +54,19 @@ export const logoutUserController = async (req, res) => {
     await logoutUser(req.cookies.sessionId);
   }
 
-  res.clearCookie('sessionId');
-  res.clearCookie('refreshToken');
+  res.clearCookie('sessionId', getSessionCookieOptions());
+  res.clearCookie('refreshToken', getSessionCookieOptions());
 
   res.status(204).send();
 };
 
 const setupSession = (res, session) => {
   res.cookie('refreshToken', session.refreshToken, {
-    httpOnly: true,
+    ...getSessionCookieOptions(),
     expires: new Date(Date.now() + ONE_MONTH),
   });
   res.cookie('sessionId', session._id, {
-    httpOnly: true,
+    ...getSessionCookieOptions(),
     expires: new Date(Date.now() + ONE_MONTH),
   });
 };
