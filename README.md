@@ -58,6 +58,8 @@ npm run seed:admin
 - `GET /admin/users?page=&perPage=` — список усіх користувачів
 - `GET /admin/users/search?phone=` — пошук користувачів за (частиною) номера телефону
 - `PATCH /admin/users/:id/discount` — встановити персональну знижку (`{ "discount": 10 }`, 0-100%)
+- `GET /admin/orders/today` — усі замовлення за поточну добу (межі доби рахуються за системним часом процесу — у Docker виставлено `TZ=Europe/Kyiv`; для локального запуску без Docker, якщо треба саме київська доба, запускайте `TZ=Europe/Kyiv npm run dev`)
+- `GET /admin/orders/search?phone=` — усі замовлення конкретного клієнта за (частиною) номера телефону
 
 ## Змінні середовища
 

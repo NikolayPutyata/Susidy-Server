@@ -7,6 +7,7 @@ services:
       - .env
     environment:
       MONGODB_URI: mongodb://mongo:27017/susidy
+      TZ: Europe/Kyiv
     depends_on:
       - mongo
     restart: unless-stopped

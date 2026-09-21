@@ -15,6 +15,10 @@ import {
   updateUserDiscountController,
 } from '../controllers/users.js';
 import {
+  getTodayOrdersController,
+  searchOrdersController,
+} from '../controllers/orders.js';
+import {
   createProductSchema,
   updateProductSchema,
 } from '../validation/products.js';
@@ -55,5 +59,9 @@ router.patch(
   validateBody(discountUpdateSchema),
   ctrlWrapper(updateUserDiscountController),
 );
+
+router.get('/orders/today', ctrlWrapper(getTodayOrdersController));
+
+router.get('/orders/search', ctrlWrapper(searchOrdersController));
 
 export default router;
