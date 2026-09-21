@@ -65,6 +65,8 @@ npm run seed:admin
 
 Див. `.env.example`. `MONGODB_URI` — повний connection string (Atlas: `mongodb+srv://...`, локально/Docker: `mongodb://...`). `CLOUDINARY_*` обов'язкові для роботи адмінського завантаження зображень. `CLIENT_ORIGIN` — origin(и) фронтенду, яким дозволено робити запити з кукі (сесія/refresh-токен зберігаються в httpOnly-куках, тому без правильного `CLIENT_ORIGIN` + `credentials: 'include'` на фронті логін/refresh не працюватимуть з іншого домену).
 
+**Деплой на різні домени (наприклад, фронт на Vercel, API на Render/Railway):** обов'язково постав `COOKIE_SECURE=true`. Браузер вважає `susidy-client.vercel.app` і `susidy-api.onrender.com` різними сайтами, і без `SameSite=None; Secure` на кукі сесії він їх просто не надсилатиме — логін формально "спрацює" (API поверне `accessToken`), але після перезавантаження сторінки сесія одразу загубиться, бо `/auth/refresh` не побачить кукі. Локально (все на `localhost`) цей прапорець не потрібен.
+
 ## Публічне API
 
 - `GET /products/all`
