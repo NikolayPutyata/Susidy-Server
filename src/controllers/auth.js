@@ -87,6 +87,10 @@ export const refreshUserSessionController = async (req, res) => {
   });
 };
 
+export const getMeController = async (req, res) => {
+  res.json({ status: 200, data: req.user });
+};
+
 export const requestResetEmailController = async (req, res) => {
   await requestResetToken(req.body.email);
   res.json({

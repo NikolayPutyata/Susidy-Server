@@ -8,12 +8,21 @@ import { errorMiddleware } from './middlewares/errorMiddleware.js';
 import cookieParser from 'cookie-parser';
 
 const PORT = Number(getEnvVar('PORT', '3000'));
+const allowedOrigins = getEnvVar('CLIENT_ORIGIN', '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 export const startServer = () => {
   const app = express();
 
   app.use(express.json());
-  app.use(cors());
+  app.use(
+    cors({
+      origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+      credentials: true,
+    }),
+  );
   app.use(cookieParser());
 
   app.use(

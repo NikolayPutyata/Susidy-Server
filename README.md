@@ -63,7 +63,7 @@ npm run seed:admin
 
 ## Змінні середовища
 
-Див. `.env.example`. `MONGODB_URI` — повний connection string (Atlas: `mongodb+srv://...`, локально/Docker: `mongodb://...`). `CLOUDINARY_*` обов'язкові для роботи адмінського завантаження зображень.
+Див. `.env.example`. `MONGODB_URI` — повний connection string (Atlas: `mongodb+srv://...`, локально/Docker: `mongodb://...`). `CLOUDINARY_*` обов'язкові для роботи адмінського завантаження зображень. `CLIENT_ORIGIN` — origin(и) фронтенду, яким дозволено робити запити з кукі (сесія/refresh-токен зберігаються в httpOnly-куках, тому без правильного `CLIENT_ORIGIN` + `credentials: 'include'` на фронті логін/refresh не працюватимуть з іншого домену).
 
 ## Публічне API
 
@@ -72,7 +72,7 @@ npm run seed:admin
 - `GET /products/:productId`
 - `POST /cart/add`, `PATCH /cart/:cart_id`, `DELETE /cart/:cart_id`, `GET /cart/:cart_id`
 - `POST /cart/checkout`
-- `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `POST /auth/refresh`, `POST /auth/request-reset-email`, `POST /auth/reset-password`
+- `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `POST /auth/refresh`, `GET /auth/me`, `POST /auth/request-reset-email`, `POST /auth/reset-password`
 
 ## Що поки не реалізовано
 
