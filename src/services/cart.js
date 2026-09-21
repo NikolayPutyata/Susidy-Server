@@ -2,6 +2,7 @@ import createHttpError from 'http-errors';
 import { CartsCollection } from '../db/models/carts.js';
 import { OrdersCollection } from '../db/models/orders.js';
 import { sendOrderToTelegram } from '../utils/telegramSender.js';
+import { findOrCreateUserByPhone } from './users.js';
 
 export const getCart = async (cart_id) => {
   const cart = await CartsCollection.findById(cart_id);
@@ -80,27 +81,37 @@ export const createOrder = async (
 
   const cart = await CartsCollection.findOne(criteria);
 
-  if (!cart) {
-    throw createHttpError(404, 'Cart not found!');
+  if (!cart || cart.items.length === 0) {
+    throw createHttpError(404, 'Cart is empty');
   }
 
+  const customer = user ?? (await findOrCreateUserByPhone({ name, phoneNumber }));
+
+  const rawTotal = cart.items.reduce(
+    (sum, item) => sum + item.quantity * item.price,
+    0,
+  );
+  const total =
+    Math.round(rawTotal * (1 - customer.discount / 100) * 100) / 100;
+
   const order = await OrdersCollection.create({
-    user_id: user ? user._id : null,
+    user_id: customer._id,
     session_id,
     name,
     phoneNumber,
     delivery,
     details,
     items: cart.items,
-    total: cart.items.reduce(
-      (sum, item) => sum + item.quantity * item.price,
-      0,
-    ),
+    total,
   });
 
-  const tgMessage = await sendOrderToTelegram(order);
+  try {
+    await sendOrderToTelegram(order);
+  } catch (err) {
+    console.error('Failed to send order notification to Telegram', err);
+  }
 
   await CartsCollection.deleteOne(criteria);
 
-  return tgMessage;
+  return order;
 };
