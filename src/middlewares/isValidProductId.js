@@ -1,11 +1,3 @@
-import { isValidObjectId } from 'mongoose';
-import createHttpError from 'http-errors';
+import { isValidId } from './isValidId.js';
 
-export const isValidProductId = (req, res, next) => {
-  const { productId } = req.params;
-  if (!isValidObjectId(productId)) {
-    throw createHttpError(400, 'ID is not valid');
-  }
-
-  next();
-};
+export const isValidProductId = isValidId('productId');

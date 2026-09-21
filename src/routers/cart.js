@@ -9,6 +9,7 @@ import {
 } from '../controllers/cart.js';
 import { authentication } from '../middlewares/authentication.js';
 import { validateBody } from '../middlewares/validateBody.js';
+import { isValidId } from '../middlewares/isValidId.js';
 import {
   addToCartValidSchema,
   checkoutValidSchema,
@@ -20,7 +21,7 @@ const router = Router();
 
 router.use(authentication);
 
-router.get('/:cart_id', ctrlWrapper(getCartController));
+router.get('/:cart_id', isValidId('cart_id'), ctrlWrapper(getCartController));
 
 router.post(
   '/add',

@@ -3,10 +3,12 @@ import { model, Schema } from 'mongoose';
 const usersSchema = new Schema(
   {
     name: { type: String, required: true },
-    phoneNumber: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    city: { type: String, reqired: true },
+    phoneNumber: { type: String, required: true, unique: true },
+    email: { type: String, unique: true, sparse: true },
+    password: { type: String },
+    city: { type: String },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    discount: { type: Number, default: 0, min: 0, max: 100 },
   },
   { timestamps: true, versionKey: false },
 );

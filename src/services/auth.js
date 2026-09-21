@@ -1,6 +1,7 @@
 import createHttpError from 'http-errors';
 import { UsersCollection } from '../db/models/user.js';
 import bcrypt from 'bcrypt';
+import { isValidObjectId } from 'mongoose';
 import { SessionsCollection } from '../db/models/sessions.js';
 import { randomBytes } from 'crypto';
 import {
@@ -17,21 +18,39 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 
 export const registerUser = async (payload) => {
-  const user = await UsersCollection.findOne({ email: payload.email });
-  if (user) throw createHttpError(409, 'Email in use');
+  const { name, phoneNumber, email, password, city } = payload;
 
-  const encryptedPassword = await bcrypt.hash(payload.password, 10);
+  const existingUser = await UsersCollection.findOne({
+    $or: [{ email }, { phoneNumber }],
+  });
+
+  const encryptedPassword = await bcrypt.hash(password, 10);
+
+  if (existingUser) {
+    if (existingUser.password) {
+      throw createHttpError(
+        409,
+        'User with this email or phone number already exists',
+      );
+    }
+
+    existingUser.set({ name, email, password: encryptedPassword, city });
+    return await existingUser.save();
+  }
 
   return await UsersCollection.create({
-    ...payload,
+    name,
+    phoneNumber,
+    email,
     password: encryptedPassword,
+    city,
   });
 };
 
 export const loginUser = async (payload) => {
   const user = await UsersCollection.findOne({ email: payload.email });
 
-  if (!user) {
+  if (!user || !user.password) {
     throw createHttpError(404, 'User not found');
   }
 
@@ -74,6 +93,10 @@ const createSession = () => {
 };
 
 export const refreshUsersSession = async ({ sessionId, refreshToken }) => {
+  if (!sessionId || !refreshToken || !isValidObjectId(sessionId)) {
+    throw createHttpError(401, 'Session not found');
+  }
+
   const session = await SessionsCollection.findOne({
     _id: sessionId,
     refreshToken,

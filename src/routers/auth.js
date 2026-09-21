@@ -7,7 +7,9 @@ import {
   resetPasswordSchema,
 } from '../validation/auth.js';
 import { ctrlWrapper } from '../utils/ctrlWrapper.js';
+import { requireAuth } from '../middlewares/authentication.js';
 import {
+  getMeController,
   loginUserController,
   logoutUserController,
   refreshUserSessionController,
@@ -17,6 +19,8 @@ import {
 } from '../controllers/auth.js';
 
 const router = Router();
+
+router.get('/me', requireAuth, ctrlWrapper(getMeController));
 
 router.post(
   '/register',

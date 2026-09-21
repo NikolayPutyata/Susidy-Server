@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import {
-  createProductController,
   getAllProductsController,
   getProductByIdController,
   getProductsByCategoryController,
@@ -12,16 +11,15 @@ const router = Router();
 
 router.get('/all', ctrlWrapper(getAllProductsController));
 
-// тимчасово
-router.post('/all', ctrlWrapper(createProductController));
-//
+router.get(
+  '/category/:category',
+  ctrlWrapper(getProductsByCategoryController),
+);
 
 router.get(
   '/:productId',
   isValidProductId,
   ctrlWrapper(getProductByIdController),
 );
-
-router.get('/all/category', ctrlWrapper(getProductsByCategoryController));
 
 export default router;
