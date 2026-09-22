@@ -7,7 +7,6 @@ import { getEnvVar } from '../src/utils/getEnvVar.js';
 const run = async () => {
   const name = getEnvVar('ADMIN_NAME', 'Admin');
   const phoneNumber = getEnvVar('ADMIN_PHONE');
-  const email = getEnvVar('ADMIN_EMAIL');
   const password = getEnvVar('ADMIN_PASSWORD');
 
   await mongoose.connect(getEnvVar('MONGODB_URI'));
@@ -15,12 +14,11 @@ const run = async () => {
   const encryptedPassword = await bcrypt.hash(password, 10);
 
   const admin = await UsersCollection.findOneAndUpdate(
-    { $or: [{ email }, { phoneNumber }] },
+    { phoneNumber },
     {
       $set: {
         name,
         phoneNumber,
-        email,
         password: encryptedPassword,
         role: 'admin',
       },
@@ -28,7 +26,7 @@ const run = async () => {
     { upsert: true, new: true },
   );
 
-  console.log(`Admin ready: ${admin.email} (${admin._id})`);
+  console.log(`Admin ready: ${admin.phoneNumber} (${admin._id})`);
 
   await mongoose.disconnect();
 };

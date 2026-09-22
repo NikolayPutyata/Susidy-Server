@@ -4,51 +4,36 @@ import bcrypt from 'bcrypt';
 import { isValidObjectId } from 'mongoose';
 import { SessionsCollection } from '../db/models/sessions.js';
 import { randomBytes } from 'crypto';
-import {
-  FIFTEEN_MINUTES,
-  ONE_MONTH,
-  SMTP,
-  TEMPLATES_DIR,
-} from '../constants/index.js';
-import jwt from 'jsonwebtoken';
-import { sendEmail } from '../utils/sendMail.js';
-import { getEnvVar } from '../utils/getEnvVar.js';
-import handlebars from 'handlebars';
-import path from 'node:path';
-import fs from 'node:fs/promises';
+import { FIFTEEN_MINUTES, ONE_MONTH } from '../constants/index.js';
 
 export const registerUser = async (payload) => {
-  const { name, phoneNumber, email, password, city } = payload;
+  const { name, phoneNumber, password, city } = payload;
 
-  const existingUser = await UsersCollection.findOne({
-    $or: [{ email }, { phoneNumber }],
-  });
+  const existingUser = await UsersCollection.findOne({ phoneNumber });
 
   const encryptedPassword = await bcrypt.hash(password, 10);
 
   if (existingUser) {
     if (existingUser.password) {
-      throw createHttpError(
-        409,
-        'User with this email or phone number already exists',
-      );
+      throw createHttpError(409, 'Phone number already registered');
     }
 
-    existingUser.set({ name, email, password: encryptedPassword, city });
+    existingUser.set({ name, password: encryptedPassword, city });
     return await existingUser.save();
   }
 
   return await UsersCollection.create({
     name,
     phoneNumber,
-    email,
     password: encryptedPassword,
     city,
   });
 };
 
 export const loginUser = async (payload) => {
-  const user = await UsersCollection.findOne({ email: payload.email });
+  const user = await UsersCollection.findOne({
+    phoneNumber: payload.phoneNumber,
+  });
 
   if (!user || !user.password) {
     throw createHttpError(404, 'User not found');
@@ -121,69 +106,4 @@ export const refreshUsersSession = async ({ sessionId, refreshToken }) => {
     userId: session.userId,
     ...newSession,
   });
-};
-
-export const requestResetToken = async (email) => {
-  const user = await UsersCollection.findOne({ email });
-  if (!user) {
-    throw createHttpError(404, 'User not found');
-  }
-  const resetToken = jwt.sign(
-    {
-      sub: user._id,
-      email,
-    },
-    getEnvVar('JWT_SECRET'),
-    {
-      expiresIn: '15m',
-    },
-  );
-  const resetPasswordTemplatePath = path.join(
-    TEMPLATES_DIR,
-    'reset-password-email.html',
-  );
-
-  const templateSource = (
-    await fs.readFile(resetPasswordTemplatePath)
-  ).toString();
-
-  const template = handlebars.compile(templateSource);
-  const html = template({
-    name: user.name,
-    link: `${getEnvVar('APP_DOMAIN')}/reset-password?token=${resetToken}`,
-  });
-
-  await sendEmail({
-    from: getEnvVar(SMTP.SMTP_FROM),
-    to: email,
-    subject: 'Reset your password',
-    html,
-  });
-};
-
-export const resetPassword = async (payload) => {
-  let entries;
-
-  try {
-    entries = jwt.verify(payload.token, getEnvVar('JWT_SECRET'));
-  } catch (err) {
-    if (err instanceof Error) throw createHttpError(401, err.message);
-    throw err;
-  }
-
-  const user = await UsersCollection.findOne({
-    email: entries.email,
-    _id: entries.sub,
-  });
-
-  if (!user) {
-    throw createHttpError(404, 'User not found');
-  }
-
-  const encryptedPassword = await bcrypt.hash(payload.password, 10);
-
-  await UsersCollection.updateOne(
-    { _id: user._id },
-    { password: encryptedPassword },
-  );
 };
