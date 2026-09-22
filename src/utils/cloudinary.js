@@ -1,11 +1,18 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { getEnvVar } from './getEnvVar.js';
 
-cloudinary.config({
-  cloud_name: getEnvVar('CLOUDINARY_CLOUD_NAME'),
-  api_key: getEnvVar('CLOUDINARY_API_KEY'),
-  api_secret: getEnvVar('CLOUDINARY_API_SECRET'),
-});
+let configured = false;
+
+const ensureConfigured = () => {
+  if (!configured) {
+    cloudinary.config({
+      cloud_name: getEnvVar('CLOUDINARY_CLOUD_NAME'),
+      api_key: getEnvVar('CLOUDINARY_API_KEY'),
+      api_secret: getEnvVar('CLOUDINARY_API_SECRET'),
+    });
+    configured = true;
+  }
+};
 
 const uploadImageBuffer = (buffer) =>
   new Promise((resolve, reject) => {
@@ -20,5 +27,6 @@ const uploadImageBuffer = (buffer) =>
   });
 
 export const uploadImages = async (files = []) => {
+  ensureConfigured();
   return Promise.all(files.map((file) => uploadImageBuffer(file.buffer)));
 };
