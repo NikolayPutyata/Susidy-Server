@@ -14,4 +14,5 @@ export const loginUserSchema = Joi.object({
     .pattern(/^[0-9]{10}$/)
     .required(),
   password: Joi.string().required(),
+  session_id: Joi.string(),
 });

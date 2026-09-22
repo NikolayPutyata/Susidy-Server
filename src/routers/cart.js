@@ -4,6 +4,7 @@ import {
   addToCartController,
   createOrderController,
   getCartController,
+  getMyCartController,
   patchCartController,
   deleteCartItemController,
 } from '../controllers/cart.js';
@@ -20,6 +21,8 @@ import {
 const router = Router();
 
 router.use(authentication);
+
+router.get('/me', ctrlWrapper(getMyCartController));
 
 router.get('/:cart_id', isValidId('cart_id'), ctrlWrapper(getCartController));
 

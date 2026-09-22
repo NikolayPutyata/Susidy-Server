@@ -1,7 +1,9 @@
+import createHttpError from 'http-errors';
 import {
   addToCart,
   createOrder,
   getCart,
+  getMyCart,
   removeItemFromCart,
   updateCart,
 } from '../services/cart.js';
@@ -12,6 +14,16 @@ export const getCartController = async (req, res) => {
   const cart = await getCart(cart_id);
 
   res.status(200).json({ status: 200, cart_id, data: cart });
+};
+
+export const getMyCartController = async (req, res) => {
+  if (!req.user) {
+    throw createHttpError(401, 'Authorization required');
+  }
+
+  const cart = await getMyCart(req.user._id);
+
+  res.status(200).json({ status: 200, data: cart });
 };
 
 export const addToCartController = async (req, res) => {

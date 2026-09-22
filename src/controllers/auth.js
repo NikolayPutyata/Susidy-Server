@@ -5,6 +5,7 @@ import {
   refreshUsersSession,
   registerUser,
 } from '../services/auth.js';
+import { mergeGuestCartIntoUser } from '../services/cart.js';
 import { getSessionCookieOptions } from '../utils/cookies.js';
 
 export const registerUserController = async (req, res) => {
@@ -27,6 +28,8 @@ export const loginUserController = async (req, res) => {
   };
 
   const session = await loginUser(reqData);
+
+  await mergeGuestCartIntoUser(req.body.session_id, session.userId);
 
   res.cookie('refreshToken', session.refreshToken, {
     ...getSessionCookieOptions(),

@@ -26,6 +26,56 @@ export const getCart = async (cart_id) => {
   return cart;
 };
 
+export const getMyCart = async (userId) => {
+  const cart = await CartsCollection.findOne({ user_id: String(userId) });
+
+  if (!cart) {
+    return [];
+  }
+
+  return cart;
+};
+
+// Called right after a successful login: a guest may have added items to a
+// session_id-scoped cart before signing in. From this point on, every cart
+// operation looks the cart up by user_id instead, so without this the
+// guest cart would just become invisible and unreachable.
+export const mergeGuestCartIntoUser = async (sessionId, userId) => {
+  if (!sessionId) return;
+
+  const guestCart = await CartsCollection.findOne({ session_id: sessionId });
+  if (!guestCart) return;
+
+  if (guestCart.items.length === 0) {
+    await CartsCollection.deleteOne({ _id: guestCart._id });
+    return;
+  }
+
+  const userCart = await CartsCollection.findOne({ user_id: String(userId) });
+
+  if (!userCart) {
+    guestCart.user_id = String(userId);
+    guestCart.session_id = undefined;
+    await guestCart.save();
+    return;
+  }
+
+  for (const item of guestCart.items) {
+    const existing = userCart.items.find(
+      (existingItem) => existingItem.product_id === item.product_id,
+    );
+
+    if (existing) {
+      existing.quantity += item.quantity;
+    } else {
+      userCart.items.push(item);
+    }
+  }
+
+  await userCart.save();
+  await CartsCollection.deleteOne({ _id: guestCart._id });
+};
+
 export const addToCart = async (
   { session_id, product_id, quantity, productName, price },
   user,
