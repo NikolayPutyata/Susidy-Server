@@ -16,10 +16,18 @@ const getCartCriteria = (user, session_id, extra = {}) => {
   return { session_id, ...extra };
 };
 
-export const getCart = async (cart_id) => {
+export const getCart = async (cart_id, user, sessionId) => {
   const cart = await CartsCollection.findById(cart_id);
 
   if (!cart) {
+    return [];
+  }
+
+  const isOwner = user
+    ? cart.user_id === String(user._id)
+    : !!sessionId && cart.session_id === sessionId;
+
+  if (!isOwner) {
     return [];
   }
 

@@ -11,7 +11,7 @@ import {
 export const getCartController = async (req, res) => {
   const { cart_id } = req.params;
 
-  const cart = await getCart(cart_id);
+  const cart = await getCart(cart_id, req.user, req.query.session_id);
 
   res.status(200).json({ status: 200, cart_id, data: cart });
 };
