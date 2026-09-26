@@ -21,7 +21,13 @@ export const checkoutValidSchema = Joi.object({
   phoneNumber: Joi.string()
     .pattern(/^[0-9]{10}$/)
     .required(),
-  delivery: Joi.string().allow(''),
+  city: Joi.string().valid('kyiv', 'kharkiv').required(),
+  fulfillment: Joi.string().valid('pickup', 'delivery').required(),
+  street: Joi.string().allow(''),
+  building: Joi.string().allow(''),
+  apartment: Joi.string().allow(''),
+  isPrivateHouse: Joi.boolean(),
+  cutlery: Joi.number().integer().min(1).max(10),
   details: Joi.string().allow(''),
   noCallback: Joi.boolean(),
   paymentMethod: Joi.string().valid('cod', 'online'),

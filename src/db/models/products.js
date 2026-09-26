@@ -23,6 +23,7 @@ const productSchema = new Schema(
     },
     images: { type: [String], required: true },
     description: { type: String },
+    weight: { type: Number },
   },
   { timestamps: true, versionKey: false },
 );

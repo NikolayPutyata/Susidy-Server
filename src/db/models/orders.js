@@ -5,7 +5,17 @@ const orderSchema = new Schema(
     user_id: { type: Schema.Types.ObjectId },
     name: { type: String, required: true },
     phoneNumber: { type: String, required: true },
-    delivery: { type: String },
+    city: { type: String, enum: ['kyiv', 'kharkiv'], required: true },
+    fulfillment: {
+      type: String,
+      enum: ['pickup', 'delivery'],
+      default: 'delivery',
+    },
+    street: { type: String },
+    building: { type: String },
+    apartment: { type: String },
+    isPrivateHouse: { type: Boolean, default: false },
+    cutlery: { type: Number, default: 1 },
     details: { type: String },
     noCallback: { type: Boolean, default: false },
     paymentMethod: {
