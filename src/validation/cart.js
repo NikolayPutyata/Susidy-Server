@@ -1,30 +1,36 @@
 import Joi from 'joi';
 
 export const addToCartValidSchema = Joi.object({
-  session_id: Joi.string(),
   product_id: Joi.string().required(),
   quantity: Joi.number().min(1).required(),
-  productName: Joi.string().min(3).required(),
+  productName: Joi.string().min(1).required(),
   price: Joi.number().required(),
+  image: Joi.string().allow('', null),
+});
+
+const checkoutItemSchema = Joi.object({
+  product_id: Joi.string().required(),
+  productName: Joi.string().min(1).required(),
+  quantity: Joi.number().min(1).required(),
+  price: Joi.number().required(),
+  image: Joi.string().allow('', null),
 });
 
 export const checkoutValidSchema = Joi.object({
-  session_id: Joi.string(),
   name: Joi.string().required(),
   phoneNumber: Joi.string()
     .pattern(/^[0-9]{10}$/)
     .required(),
-  delivery: Joi.string(),
-  details: Joi.string(),
+  delivery: Joi.string().allow(''),
+  details: Joi.string().allow(''),
+  noCallback: Joi.boolean(),
+  paymentMethod: Joi.string().valid('cod', 'online'),
+  // required for guests; ignored for logged-in users (their cart in the
+  // carts collection is the source of truth) — enforced in the service,
+  // not here, since Joi doesn't see req.user.
+  items: Joi.array().items(checkoutItemSchema),
 });
 
-export const updateCartValidSchema = Joi.object({
-  session_id: Joi.string(),
-  product_id: Joi.string().required(),
+export const updateCartItemValidSchema = Joi.object({
   quantity: Joi.number().min(1).required(),
-});
-
-export const deleteCartItemValidSchema = Joi.object({
-  session_id: Joi.string(),
-  product_id: Joi.string().required(),
 });

@@ -3,17 +3,23 @@ import { model, Schema } from 'mongoose';
 const orderSchema = new Schema(
   {
     user_id: { type: Schema.Types.ObjectId },
-    session_id: { type: String },
     name: { type: String, required: true },
     phoneNumber: { type: String, required: true },
     delivery: { type: String },
     details: { type: String },
+    noCallback: { type: Boolean, default: false },
+    paymentMethod: {
+      type: String,
+      enum: ['cod', 'online'],
+      default: 'cod',
+    },
     items: [
       {
         product_id: String,
         productName: String,
         quantity: Number,
         price: Number,
+        image: String,
       },
     ],
     total: Number,

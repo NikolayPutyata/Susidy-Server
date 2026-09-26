@@ -11,6 +11,8 @@ export const sendOrderToTelegram = async (data) => {
     📞 Телефон: [${data.phoneNumber}](tel:${data.phoneNumber})
     🚚 Доставка: ${data.delivery || 'Не вказана'}
     📝 Деталі: ${data.details || 'Не вказані'}
+    💳 Оплата: ${data.paymentMethod === 'online' ? 'Онлайн' : 'При отриманні'}
+    ${data.noCallback ? '🔕 Просив(ла) не передзвонювати' : ''}
 
     🍣 **Товари**:
     ${data.items

@@ -20,3 +20,9 @@ export const getOrdersByPhone = async (phoneNumber) => {
     phoneNumber: { $regex: phoneNumber },
   }).sort({ createdAt: -1 });
 };
+
+export const getMyOrders = async (userId) => {
+  return await OrdersCollection.find({ user_id: userId }).sort({
+    createdAt: -1,
+  });
+};

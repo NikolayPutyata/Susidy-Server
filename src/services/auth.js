@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import { isValidObjectId } from 'mongoose';
 import { SessionsCollection } from '../db/models/sessions.js';
 import { randomBytes } from 'crypto';
-import { FIFTEEN_MINUTES, ONE_MONTH } from '../constants/index.js';
+import { FIFTEEN_MINUTES, SESSION_DURATION } from '../constants/index.js';
 
 export const registerUser = async (payload) => {
   const { name, phoneNumber, password, city } = payload;
@@ -55,7 +55,7 @@ export const loginUser = async (payload) => {
     accessToken,
     refreshToken,
     accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
-    refreshTokenValidUntil: new Date(Date.now() + ONE_MONTH),
+    refreshTokenValidUntil: new Date(Date.now() + SESSION_DURATION),
   });
 };
 
@@ -73,7 +73,7 @@ const createSession = () => {
     accessToken,
     refreshToken,
     accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
-    refreshTokenValidUntil: new Date(Date.now() + ONE_MONTH),
+    refreshTokenValidUntil: new Date(Date.now() + SESSION_DURATION),
   };
 };
 

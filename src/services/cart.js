@@ -4,20 +4,8 @@ import { OrdersCollection } from '../db/models/orders.js';
 import { sendOrderToTelegram } from '../utils/telegramSender.js';
 import { findOrCreateUserByPhone } from './users.js';
 
-const getCartCriteria = (user, session_id, extra = {}) => {
-  if (user) {
-    return { user_id: user._id, ...extra };
-  }
-
-  if (!session_id) {
-    throw createHttpError(400, 'session_id is required for a guest cart');
-  }
-
-  return { session_id, ...extra };
-};
-
-export const getCart = async (cart_id) => {
-  const cart = await CartsCollection.findById(cart_id);
+export const getMyCart = async (userId) => {
+  const cart = await CartsCollection.findOne({ user_id: String(userId) });
 
   if (!cart) {
     return [];
@@ -27,28 +15,19 @@ export const getCart = async (cart_id) => {
 };
 
 export const addToCart = async (
-  { session_id, product_id, quantity, productName, price },
-  user,
+  { product_id, quantity, productName, price, image },
+  userId,
 ) => {
-  const criteria = getCartCriteria(user, session_id, {
-    'items.product_id': product_id,
-  });
-
   let cart = await CartsCollection.findOneAndUpdate(
-    criteria,
+    { user_id: String(userId), 'items.product_id': product_id },
     { $inc: { 'items.$.quantity': quantity } },
     { new: true },
   );
 
   if (!cart) {
-    const fallbackCriteria = getCartCriteria(user, session_id);
     cart = await CartsCollection.findOneAndUpdate(
-      fallbackCriteria,
-      {
-        $push: {
-          items: { product_id, quantity, productName, price },
-        },
-      },
+      { user_id: String(userId) },
+      { $push: { items: { product_id, quantity, productName, price, image } } },
       { new: true, upsert: true },
     );
   }
@@ -56,50 +35,59 @@ export const addToCart = async (
   return cart;
 };
 
-export const updateCart = async (
-  { session_id, product_id, quantity },
-  user,
-) => {
-  const criteria = getCartCriteria(user, session_id, {
-    'items.product_id': product_id,
-  });
-
-  const updatedCart = await CartsCollection.findOneAndUpdate(
-    criteria,
+export const updateCartItem = async (productId, quantity, userId) => {
+  const cart = await CartsCollection.findOneAndUpdate(
+    { user_id: String(userId), 'items.product_id': productId },
     { $set: { 'items.$.quantity': quantity } },
     { new: true },
   );
 
-  return updatedCart;
+  if (!cart) {
+    throw createHttpError(404, 'Item not found in cart');
+  }
+
+  return cart;
 };
 
-export const removeItemFromCart = async ({ session_id, product_id }, user) => {
-  const criteria = getCartCriteria(user, session_id);
-
-  const updatedCart = await CartsCollection.findOneAndUpdate(
-    criteria,
-    { $pull: { items: { product_id } } },
+export const removeCartItem = async (productId, userId) => {
+  const cart = await CartsCollection.findOneAndUpdate(
+    { user_id: String(userId) },
+    { $pull: { items: { product_id: productId } } },
     { new: true },
   );
 
-  return updatedCart;
+  if (!cart) {
+    throw createHttpError(404, 'Cart not found');
+  }
+
+  return cart;
 };
 
 export const createOrder = async (
-  { session_id, name, phoneNumber, delivery, details },
+  { name, phoneNumber, delivery, details, noCallback, paymentMethod, items },
   user,
 ) => {
-  const criteria = getCartCriteria(user, session_id);
+  let orderItems;
 
-  const cart = await CartsCollection.findOne(criteria);
+  if (user) {
+    const cart = await CartsCollection.findOne({ user_id: String(user._id) });
 
-  if (!cart || cart.items.length === 0) {
-    throw createHttpError(404, 'Cart is empty');
+    if (!cart || cart.items.length === 0) {
+      throw createHttpError(404, 'Cart is empty');
+    }
+
+    orderItems = cart.items;
+  } else {
+    if (!Array.isArray(items) || items.length === 0) {
+      throw createHttpError(400, 'Cart is empty');
+    }
+
+    orderItems = items;
   }
 
   const customer = user ?? (await findOrCreateUserByPhone({ name, phoneNumber }));
 
-  const rawTotal = cart.items.reduce(
+  const rawTotal = orderItems.reduce(
     (sum, item) => sum + item.quantity * item.price,
     0,
   );
@@ -108,12 +96,13 @@ export const createOrder = async (
 
   const order = await OrdersCollection.create({
     user_id: customer._id,
-    session_id,
     name,
     phoneNumber,
     delivery,
     details,
-    items: cart.items,
+    noCallback,
+    paymentMethod,
+    items: orderItems,
     total,
   });
 
@@ -123,7 +112,9 @@ export const createOrder = async (
     console.error('Failed to send order notification to Telegram', err);
   }
 
-  await CartsCollection.deleteOne(criteria);
+  if (user) {
+    await CartsCollection.deleteOne({ user_id: String(user._id) });
+  }
 
   return order;
 };
