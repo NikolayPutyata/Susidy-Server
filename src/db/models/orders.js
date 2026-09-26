@@ -20,6 +20,7 @@ const orderSchema = new Schema(
         quantity: Number,
         price: Number,
         image: String,
+        _id: false,
       },
     ],
     total: Number,
