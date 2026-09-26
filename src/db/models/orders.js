@@ -15,6 +15,7 @@ const orderSchema = new Schema(
     building: { type: String },
     apartment: { type: String },
     isPrivateHouse: { type: Boolean, default: false },
+    pickupAddress: { type: String },
     cutlery: { type: Number, default: 1 },
     details: { type: String },
     noCallback: { type: Boolean, default: false },

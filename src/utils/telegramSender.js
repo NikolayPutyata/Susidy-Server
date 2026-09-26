@@ -9,7 +9,7 @@ const formatFulfillment = (data) => {
   const city = CITY_LABELS[data.city] || data.city;
 
   if (data.fulfillment === 'pickup') {
-    return `Самовивіз, ${city}`;
+    return `Самовивіз, ${city}, ${data.pickupAddress || 'адреса не вказана'}`;
   }
 
   const apartment = data.isPrivateHouse ? 'приватний будинок' : `кв. ${data.apartment}`;
