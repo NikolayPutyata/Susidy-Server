@@ -1,4 +1,4 @@
-import { ONE_MONTH } from '../constants/index.js';
+import { SESSION_DURATION } from '../constants/index.js';
 import {
   loginUser,
   logoutUser,
@@ -30,11 +30,11 @@ export const loginUserController = async (req, res) => {
 
   res.cookie('refreshToken', session.refreshToken, {
     ...getSessionCookieOptions(),
-    expires: new Date(Date.now() + ONE_MONTH),
+    expires: new Date(Date.now() + SESSION_DURATION),
   });
   res.cookie('sessionId', session._id, {
     ...getSessionCookieOptions(),
-    expires: new Date(Date.now() + ONE_MONTH),
+    expires: new Date(Date.now() + SESSION_DURATION),
   });
 
   res.json({
@@ -60,11 +60,11 @@ export const logoutUserController = async (req, res) => {
 const setupSession = (res, session) => {
   res.cookie('refreshToken', session.refreshToken, {
     ...getSessionCookieOptions(),
-    expires: new Date(Date.now() + ONE_MONTH),
+    expires: new Date(Date.now() + SESSION_DURATION),
   });
   res.cookie('sessionId', session._id, {
     ...getSessionCookieOptions(),
-    expires: new Date(Date.now() + ONE_MONTH),
+    expires: new Date(Date.now() + SESSION_DURATION),
   });
 };
 

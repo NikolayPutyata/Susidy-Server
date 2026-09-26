@@ -3,48 +3,49 @@ import { ctrlWrapper } from '../utils/ctrlWrapper.js';
 import {
   addToCartController,
   createOrderController,
-  getCartController,
-  patchCartController,
+  getMyCartController,
+  patchCartItemController,
   deleteCartItemController,
 } from '../controllers/cart.js';
-import { authentication } from '../middlewares/authentication.js';
+import { authentication, requireAuth } from '../middlewares/authentication.js';
 import { validateBody } from '../middlewares/validateBody.js';
-import { isValidId } from '../middlewares/isValidId.js';
 import {
   addToCartValidSchema,
   checkoutValidSchema,
-  deleteCartItemValidSchema,
-  updateCartValidSchema,
+  updateCartItemValidSchema,
 } from '../validation/cart.js';
 
 const router = Router();
 
-router.use(authentication);
-
-router.get('/:cart_id', isValidId('cart_id'), ctrlWrapper(getCartController));
+// Guests never have a server-side cart (it lives in their browser's
+// localStorage) — only checkout is reachable without an account.
+router.get('/me', requireAuth, ctrlWrapper(getMyCartController));
 
 router.post(
   '/add',
+  requireAuth,
   validateBody(addToCartValidSchema),
   ctrlWrapper(addToCartController),
 );
 
-router.post(
-  '/checkout',
-  validateBody(checkoutValidSchema),
-  ctrlWrapper(createOrderController),
-);
-
 router.patch(
-  '/:cart_id',
-  validateBody(updateCartValidSchema),
-  ctrlWrapper(patchCartController),
+  '/items/:productId',
+  requireAuth,
+  validateBody(updateCartItemValidSchema),
+  ctrlWrapper(patchCartItemController),
 );
 
 router.delete(
-  '/:cart_id',
-  validateBody(deleteCartItemValidSchema),
+  '/items/:productId',
+  requireAuth,
   ctrlWrapper(deleteCartItemController),
+);
+
+router.post(
+  '/checkout',
+  authentication,
+  validateBody(checkoutValidSchema),
+  ctrlWrapper(createOrderController),
 );
 
 export default router;

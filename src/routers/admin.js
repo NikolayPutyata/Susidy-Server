@@ -10,6 +10,7 @@ import {
   updateProductController,
 } from '../controllers/products.js';
 import {
+  exportUsersController,
   getAllUsersController,
   searchUsersController,
   updateUserDiscountController,
@@ -52,6 +53,8 @@ router.delete(
 router.get('/users', ctrlWrapper(getAllUsersController));
 
 router.get('/users/search', ctrlWrapper(searchUsersController));
+
+router.get('/users/export', ctrlWrapper(exportUsersController));
 
 router.patch(
   '/users/:id/discount',

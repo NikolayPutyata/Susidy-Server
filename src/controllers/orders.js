@@ -1,4 +1,8 @@
-import { getOrdersByPhone, getTodayOrders } from '../services/orders.js';
+import {
+  getMyOrders,
+  getOrdersByPhone,
+  getTodayOrders,
+} from '../services/orders.js';
 
 export const getTodayOrdersController = async (req, res) => {
   const orders = await getTodayOrders();
@@ -8,6 +12,12 @@ export const getTodayOrdersController = async (req, res) => {
 
 export const searchOrdersController = async (req, res) => {
   const orders = await getOrdersByPhone(req.query.phone);
+
+  res.status(200).json({ status: 200, data: orders });
+};
+
+export const getMyOrdersController = async (req, res) => {
+  const orders = await getMyOrders(req.user._id);
 
   res.status(200).json({ status: 200, data: orders });
 };
