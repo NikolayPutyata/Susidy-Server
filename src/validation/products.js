@@ -20,6 +20,7 @@ export const createProductSchema = Joi.object({
     .valid(...categories)
     .default('other'),
   description: Joi.string().allow('').max(1000),
+  weight: Joi.number().min(0),
 });
 
 export const updateProductSchema = Joi.object({
@@ -28,4 +29,5 @@ export const updateProductSchema = Joi.object({
   priceKharkov: Joi.number().min(0),
   category: Joi.string().valid(...categories),
   description: Joi.string().allow('').max(1000),
+  weight: Joi.number().min(0),
 }).min(1);

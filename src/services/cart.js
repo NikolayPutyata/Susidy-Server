@@ -64,7 +64,21 @@ export const removeCartItem = async (productId, userId) => {
 };
 
 export const createOrder = async (
-  { name, phoneNumber, delivery, details, noCallback, paymentMethod, items },
+  {
+    name,
+    phoneNumber,
+    city,
+    fulfillment,
+    street,
+    building,
+    apartment,
+    isPrivateHouse,
+    cutlery,
+    details,
+    noCallback,
+    paymentMethod,
+    items,
+  },
   user,
 ) => {
   let orderItems;
@@ -98,7 +112,13 @@ export const createOrder = async (
     user_id: customer._id,
     name,
     phoneNumber,
-    delivery,
+    city,
+    fulfillment,
+    street,
+    building,
+    apartment,
+    isPrivateHouse,
+    cutlery,
     details,
     noCallback,
     paymentMethod,
