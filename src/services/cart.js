@@ -49,6 +49,30 @@ export const updateCartItem = async (productId, quantity, userId) => {
   return cart;
 };
 
+// Викликається клієнтом при зміні міста — товари в кошику вже додані за
+// ціною попереднього міста, і мають бути перераховані під нове.
+export const repriceCart = async (items, userId) => {
+  const cart = await CartsCollection.findOne({ user_id: String(userId) });
+
+  if (!cart) {
+    return [];
+  }
+
+  const priceByProductId = new Map(
+    items.map(({ product_id, price }) => [product_id, price]),
+  );
+
+  for (const item of cart.items) {
+    if (priceByProductId.has(item.product_id)) {
+      item.price = priceByProductId.get(item.product_id);
+    }
+  }
+
+  await cart.save();
+
+  return cart;
+};
+
 export const removeCartItem = async (productId, userId) => {
   const cart = await CartsCollection.findOneAndUpdate(
     { user_id: String(userId) },
@@ -74,6 +98,7 @@ export const createOrder = async (
     apartment,
     isPrivateHouse,
     pickupAddress,
+    pickupPointId,
     cutlery,
     details,
     noCallback,
@@ -120,6 +145,7 @@ export const createOrder = async (
     apartment,
     isPrivateHouse,
     pickupAddress,
+    pickupPointId,
     cutlery,
     details,
     noCallback,

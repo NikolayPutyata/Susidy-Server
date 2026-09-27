@@ -16,7 +16,7 @@ import {
   updateUserDiscountController,
 } from '../controllers/users.js';
 import {
-  getTodayOrdersController,
+  getOrdersByDayController,
   searchOrdersController,
 } from '../controllers/orders.js';
 import {
@@ -63,7 +63,7 @@ router.patch(
   ctrlWrapper(updateUserDiscountController),
 );
 
-router.get('/orders/today', ctrlWrapper(getTodayOrdersController));
+router.get('/orders/by-day', ctrlWrapper(getOrdersByDayController));
 
 router.get('/orders/search', ctrlWrapper(searchOrdersController));
 

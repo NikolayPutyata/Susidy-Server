@@ -6,12 +6,14 @@ import {
   getMyCartController,
   patchCartItemController,
   deleteCartItemController,
+  repriceCartController,
 } from '../controllers/cart.js';
 import { authentication, requireAuth } from '../middlewares/authentication.js';
 import { validateBody } from '../middlewares/validateBody.js';
 import {
   addToCartValidSchema,
   checkoutValidSchema,
+  repriceCartValidSchema,
   updateCartItemValidSchema,
 } from '../validation/cart.js';
 
@@ -46,6 +48,13 @@ router.post(
   authentication,
   validateBody(checkoutValidSchema),
   ctrlWrapper(createOrderController),
+);
+
+router.patch(
+  '/reprice',
+  requireAuth,
+  validateBody(repriceCartValidSchema),
+  ctrlWrapper(repriceCartController),
 );
 
 export default router;
