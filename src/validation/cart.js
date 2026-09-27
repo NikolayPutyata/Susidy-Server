@@ -1,5 +1,7 @@
 import Joi from 'joi';
 
+const timeSlotPattern = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+
 export const addToCartValidSchema = Joi.object({
   product_id: Joi.string().required(),
   quantity: Joi.number().min(1).required(),
@@ -29,6 +31,22 @@ export const checkoutValidSchema = Joi.object({
   isPrivateHouse: Joi.boolean(),
   pickupAddress: Joi.string().allow(''),
   pickupPointId: Joi.string().allow(''),
+  // 'asap' is only meaningful for delivery — pickup always needs a real slot
+  // since staff must have the order ready by the time the customer arrives.
+  requestedTime: Joi.string()
+    .required()
+    .custom((value, helpers) => {
+      if (value === 'asap') {
+        if (helpers.state.ancestors[0].fulfillment === 'pickup') {
+          return helpers.error('any.invalid');
+        }
+        return value;
+      }
+      if (!timeSlotPattern.test(value)) {
+        return helpers.error('any.invalid');
+      }
+      return value;
+    }),
   cutlery: Joi.number().integer().min(1).max(20),
   details: Joi.string().allow(''),
   noCallback: Joi.boolean(),

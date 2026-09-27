@@ -64,6 +64,7 @@ export const createOrderController = async (req, res) => {
     isPrivateHouse: req.body.isPrivateHouse,
     pickupAddress: req.body.pickupAddress,
     pickupPointId: req.body.pickupPointId,
+    requestedTime: req.body.requestedTime,
     cutlery: req.body.cutlery,
     details: req.body.details,
     noCallback: req.body.noCallback,

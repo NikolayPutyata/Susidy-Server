@@ -17,6 +17,7 @@ const orderSchema = new Schema(
     isPrivateHouse: { type: Boolean, default: false },
     pickupAddress: { type: String },
     pickupPointId: { type: String },
+    requestedTime: { type: String },
     cutlery: { type: Number, default: 1 },
     details: { type: String },
     noCallback: { type: Boolean, default: false },
