@@ -1,11 +1,13 @@
 import {
   getMyOrders,
+  getOrdersByDay,
   getOrdersByPhone,
-  getTodayOrders,
 } from '../services/orders.js';
 
-export const getTodayOrdersController = async (req, res) => {
-  const orders = await getTodayOrders();
+export const getOrdersByDayController = async (req, res) => {
+  const { day, pickupPointId } = req.query;
+
+  const orders = await getOrdersByDay({ day, pickupPointId });
 
   res.status(200).json({ status: 200, data: orders });
 };

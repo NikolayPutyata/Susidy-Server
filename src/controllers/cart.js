@@ -3,6 +3,7 @@ import {
   createOrder,
   getMyCart,
   removeCartItem,
+  repriceCart,
   updateCartItem,
 } from '../services/cart.js';
 
@@ -62,6 +63,7 @@ export const createOrderController = async (req, res) => {
     apartment: req.body.apartment,
     isPrivateHouse: req.body.isPrivateHouse,
     pickupAddress: req.body.pickupAddress,
+    pickupPointId: req.body.pickupPointId,
     cutlery: req.body.cutlery,
     details: req.body.details,
     noCallback: req.body.noCallback,
@@ -72,4 +74,10 @@ export const createOrderController = async (req, res) => {
   const order = await createOrder(reqData, req.user);
 
   res.status(201).json({ status: 201, data: order });
+};
+
+export const repriceCartController = async (req, res) => {
+  const cart = await repriceCart(req.body.items, req.user._id);
+
+  res.status(200).json({ status: 200, data: cart });
 };

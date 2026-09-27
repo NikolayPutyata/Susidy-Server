@@ -1,14 +1,23 @@
 import createHttpError from 'http-errors';
 import { OrdersCollection } from '../db/models/orders.js';
 
-export const getTodayOrders = async () => {
+// day: 'today' | 'yesterday'. pickupPointId optionally narrows to orders
+// picked up from that one point (delivery orders aren't tied to a point
+// yet, so they're excluded whenever a point filter is applied).
+export const getOrdersByDay = async ({ day = 'today', pickupPointId } = {}) => {
+  const dayOffset = day === 'yesterday' ? 1 : 0;
   const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOffset);
+  const end = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - dayOffset + 1,
+  );
 
-  return await OrdersCollection.find({
-    createdAt: { $gte: start, $lt: end },
-  }).sort({ createdAt: -1 });
+  const match = { createdAt: { $gte: start, $lt: end } };
+  if (pickupPointId) match.pickupPointId = pickupPointId;
+
+  return await OrdersCollection.find(match).sort({ createdAt: -1 });
 };
 
 export const getOrdersByPhone = async (phoneNumber) => {

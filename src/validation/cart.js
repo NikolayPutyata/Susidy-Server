@@ -28,7 +28,8 @@ export const checkoutValidSchema = Joi.object({
   apartment: Joi.string().allow(''),
   isPrivateHouse: Joi.boolean(),
   pickupAddress: Joi.string().allow(''),
-  cutlery: Joi.number().integer().min(1).max(10),
+  pickupPointId: Joi.string().allow(''),
+  cutlery: Joi.number().integer().min(1).max(20),
   details: Joi.string().allow(''),
   noCallback: Joi.boolean(),
   paymentMethod: Joi.string().valid('cod', 'online'),
@@ -40,4 +41,16 @@ export const checkoutValidSchema = Joi.object({
 
 export const updateCartItemValidSchema = Joi.object({
   quantity: Joi.number().min(1).required(),
+});
+
+export const repriceCartValidSchema = Joi.object({
+  items: Joi.array()
+    .items(
+      Joi.object({
+        product_id: Joi.string().required(),
+        price: Joi.number().required(),
+      }),
+    )
+    .min(1)
+    .required(),
 });
