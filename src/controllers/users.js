@@ -33,9 +33,9 @@ const escapeCsvValue = (value) => {
 };
 
 export const exportUsersController = async (req, res) => {
-  const { from, to } = req.query;
+  const { from, to, city } = req.query;
 
-  const users = await getUsersWhoOrderedInRange({ from, to });
+  const users = await getUsersWhoOrderedInRange({ from, to, city });
 
   const header = ["Ім'я", 'Номер', 'Місто'].join(',');
   const rows = users.map((user) =>
