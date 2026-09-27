@@ -6,16 +6,25 @@ import {
 
 export const getOrdersByDayController = async (req, res) => {
   const { day, pickupPointId } = req.query;
+  const page = Number(req.query.page) || 1;
+  const perPage = Number(req.query.perPage) || 10;
 
-  const orders = await getOrdersByDay({ day, pickupPointId });
+  const result = await getOrdersByDay({ day, pickupPointId, page, perPage });
 
-  res.status(200).json({ status: 200, data: orders });
+  res.status(200).json({ status: 200, ...result });
 };
 
 export const searchOrdersController = async (req, res) => {
-  const orders = await getOrdersByPhone(req.query.phone);
+  const page = Number(req.query.page) || 1;
+  const perPage = Number(req.query.perPage) || 10;
 
-  res.status(200).json({ status: 200, data: orders });
+  const result = await getOrdersByPhone({
+    phoneNumber: req.query.phone,
+    page,
+    perPage,
+  });
+
+  res.status(200).json({ status: 200, ...result });
 };
 
 export const getMyOrdersController = async (req, res) => {

@@ -7,7 +7,7 @@ import {
 
 export const getAllUsersController = async (req, res) => {
   const page = Number(req.query.page) || 1;
-  const perPage = Number(req.query.perPage) || 20;
+  const perPage = Number(req.query.perPage) || 10;
 
   const result = await getAllUsers({ page, perPage });
 
@@ -15,9 +15,16 @@ export const getAllUsersController = async (req, res) => {
 };
 
 export const searchUsersController = async (req, res) => {
-  const users = await searchUsersByPhone(req.query.phone);
+  const page = Number(req.query.page) || 1;
+  const perPage = Number(req.query.perPage) || 10;
 
-  res.status(200).json({ status: 200, data: users });
+  const result = await searchUsersByPhone({
+    phoneNumber: req.query.phone,
+    page,
+    perPage,
+  });
+
+  res.status(200).json({ status: 200, ...result });
 };
 
 const escapeCsvValue = (value) => {

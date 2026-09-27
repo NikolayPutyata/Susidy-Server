@@ -30,12 +30,12 @@ const attachOrderCounts = async (users) => {
   }));
 };
 
-export const getAllUsers = async ({ page = 1, perPage = 20 } = {}) => {
+const paginateUsers = async (match, { page = 1, perPage = 10 } = {}) => {
   const skip = (page - 1) * perPage;
 
   const [users, totalItems] = await Promise.all([
-    UsersCollection.find().sort({ createdAt: -1 }).skip(skip).limit(perPage),
-    UsersCollection.countDocuments(),
+    UsersCollection.find(match).sort({ createdAt: -1 }).skip(skip).limit(perPage),
+    UsersCollection.countDocuments(match),
   ]);
 
   return {
@@ -47,16 +47,15 @@ export const getAllUsers = async ({ page = 1, perPage = 20 } = {}) => {
   };
 };
 
-export const searchUsersByPhone = async (phoneNumber) => {
+export const getAllUsers = async ({ page = 1, perPage = 10 } = {}) =>
+  paginateUsers({}, { page, perPage });
+
+export const searchUsersByPhone = async ({ phoneNumber, page = 1, perPage = 10 } = {}) => {
   if (!phoneNumber) {
     throw createHttpError(400, 'phone query parameter is required');
   }
 
-  const users = await UsersCollection.find({
-    phoneNumber: { $regex: phoneNumber },
-  }).sort({ createdAt: -1 });
-
-  return attachOrderCounts(users);
+  return paginateUsers({ phoneNumber: { $regex: phoneNumber } }, { page, perPage });
 };
 
 export const updateUserDiscount = async (userId, discount) => {

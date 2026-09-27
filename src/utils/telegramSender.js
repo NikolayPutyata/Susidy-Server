@@ -51,6 +51,11 @@ const resolveBot = (order) => {
 
 const CITY_LABELS = { kyiv: 'Київ', kharkiv: 'Харків' };
 
+const formatRequestedTime = (data) => {
+  if (!data.requestedTime) return 'не вказано';
+  return data.requestedTime === 'asap' ? 'Якнайшвидше' : data.requestedTime;
+};
+
 const formatFulfillment = (data) => {
   const city = CITY_LABELS[data.city] || data.city;
 
@@ -69,6 +74,7 @@ export const sendOrderToTelegram = async (data) => {
     👤 Ім'я: ${data.name}
     📞 Телефон: [${data.phoneNumber}](tel:${data.phoneNumber})
     🚚 ${formatFulfillment(data)}
+    🕒 Час: ${formatRequestedTime(data)}
     🍴 Приборів: ${data.cutlery || 1}
     📝 Деталі: ${data.details || 'Не вказані'}
     💳 Оплата: ${data.paymentMethod === 'online' ? 'Онлайн' : 'При отриманні'}
