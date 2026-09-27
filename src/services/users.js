@@ -73,9 +73,9 @@ export const updateUserDiscount = async (userId, discount) => {
 };
 
 // Used by the admin export: "customers" means people who placed at least
-// one order, optionally narrowed to those who ordered within [from, to].
-// Omitting both bounds means all-time.
-export const getUsersWhoOrderedInRange = async ({ from, to } = {}) => {
+// one order, optionally narrowed to those who ordered within [from, to]
+// and/or in one city. Omitting a filter means no restriction on it.
+export const getUsersWhoOrderedInRange = async ({ from, to, city } = {}) => {
   const match = {};
 
   if (from || to) {
@@ -83,6 +83,8 @@ export const getUsersWhoOrderedInRange = async ({ from, to } = {}) => {
     if (from) match.createdAt.$gte = new Date(from);
     if (to) match.createdAt.$lte = new Date(to);
   }
+
+  if (city) match.city = city;
 
   const userIds = await OrdersCollection.distinct('user_id', match);
 
