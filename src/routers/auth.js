@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { validateBody } from '../middlewares/validateBody.js';
 import { loginUserSchema, registerUserSchema } from '../validation/auth.js';
-import { birthdayUpdateSchema } from '../validation/users.js';
+import { birthdayUpdateSchema, updateProfileSchema } from '../validation/users.js';
 import { ctrlWrapper } from '../utils/ctrlWrapper.js';
 import { requireAuth } from '../middlewares/authentication.js';
 import { isValidId } from '../middlewares/isValidId.js';
@@ -16,11 +16,19 @@ import {
   addMyFavoriteController,
   removeMyFavoriteController,
   updateMyBirthdayController,
+  updateMyProfileController,
 } from '../controllers/users.js';
 
 const router = Router();
 
 router.get('/me', requireAuth, ctrlWrapper(getMeController));
+
+router.patch(
+  '/me',
+  requireAuth,
+  validateBody(updateProfileSchema),
+  ctrlWrapper(updateMyProfileController),
+);
 
 router.patch(
   '/me/birthday',

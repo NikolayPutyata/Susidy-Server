@@ -1,6 +1,7 @@
 import createHttpError from 'http-errors';
 import { CartsCollection } from '../db/models/carts.js';
 import { OrdersCollection } from '../db/models/orders.js';
+import { ProductsCollection } from '../db/models/products.js';
 import { sendOrderToTelegram } from '../utils/telegramSender.js';
 import { findOrCreateUserByPhone } from './users.js';
 
@@ -124,6 +125,25 @@ export const createOrder = async (
     }
 
     orderItems = items;
+  }
+
+  // An admin can "stop" a position at one pickup point while it stays
+  // available everywhere else — only relevant once the customer has
+  // actually picked that point, so delivery orders and orders without a
+  // point yet skip this check entirely.
+  if (fulfillment === 'pickup' && pickupPointId) {
+    const stoppedProducts = await ProductsCollection.find({
+      _id: { $in: orderItems.map((item) => item.product_id) },
+      stoppedPoints: pickupPointId,
+    });
+
+    if (stoppedProducts.length > 0) {
+      const names = stoppedProducts.map((p) => p.name).join(', ');
+      throw createHttpError(
+        409,
+        `На жаль, цих позицій тимчасово немає на обраній точці: ${names}`,
+      );
+    }
   }
 
   const customer = user ?? (await findOrCreateUserByPhone({ name, phoneNumber }));

@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import { PICKUP_POINT_IDS } from '../constants/index.js';
 
 const categories = [
   'rolls',
@@ -31,3 +32,10 @@ export const updateProductSchema = Joi.object({
   description: Joi.string().allow('').max(1000),
   weight: Joi.number().min(0),
 }).min(1);
+
+export const productStopSchema = Joi.object({
+  pickupPointId: Joi.string()
+    .valid(...PICKUP_POINT_IDS)
+    .required(),
+  stopped: Joi.boolean().required(),
+});

@@ -5,6 +5,7 @@ import {
   getAllProducts,
   getProductById,
   getProductsByCategory,
+  setProductStopStatus,
   updateProduct,
 } from '../services/products.js';
 import { uploadImages } from '../utils/cloudinary.js';
@@ -53,6 +54,15 @@ export const updateProductController = async (req, res) => {
   }
 
   const product = await updateProduct(id, payload);
+
+  res.status(200).json({ status: 200, data: product });
+};
+
+export const updateProductStopController = async (req, res) => {
+  const { id } = req.params;
+  const { pickupPointId, stopped } = req.body;
+
+  const product = await setProductStopStatus(id, pickupPointId, stopped);
 
   res.status(200).json({ status: 200, data: product });
 };

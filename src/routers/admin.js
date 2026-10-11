@@ -8,6 +8,7 @@ import {
   createProductController,
   deleteProductController,
   updateProductController,
+  updateProductStopController,
 } from '../controllers/products.js';
 import {
   exportUsersController,
@@ -21,6 +22,7 @@ import {
 } from '../controllers/orders.js';
 import {
   createProductSchema,
+  productStopSchema,
   updateProductSchema,
 } from '../validation/products.js';
 import { discountUpdateSchema } from '../validation/users.js';
@@ -42,6 +44,13 @@ router.patch(
   upload.array('images', 10),
   validateBody(updateProductSchema),
   ctrlWrapper(updateProductController),
+);
+
+router.patch(
+  '/products/:id/stop',
+  isValidId('id'),
+  validateBody(productStopSchema),
+  ctrlWrapper(updateProductStopController),
 );
 
 router.delete(
