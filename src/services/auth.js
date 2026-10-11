@@ -36,7 +36,7 @@ export const loginUser = async (payload) => {
   });
 
   if (!user || !user.password) {
-    throw createHttpError(404, 'User not found');
+    throw createHttpError(404, 'На жаль, користувач наразі не зареєстрований');
   }
 
   const isEqual = await bcrypt.compare(payload.password, user.password);

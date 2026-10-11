@@ -6,7 +6,9 @@ export const registerUserSchema = Joi.object({
     .pattern(/^[0-9]{10}$/)
     .required(),
   password: Joi.string().required(),
-  city: Joi.string().valid('Kyiv', 'Kharkiv'),
+  // '' — місто не обов'язкове; контрольований <select> завжди шле якесь
+  // значення, і без цього порожній вибір падав як невалідний.
+  city: Joi.string().valid('Kyiv', 'Kharkiv', ''),
 });
 
 export const loginUserSchema = Joi.object({
