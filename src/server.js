@@ -25,12 +25,17 @@ export const startServer = () => {
   );
   app.use(cookieParser());
 
+  // pino-pretty is a devDependency — colorized formatting is only useful
+  // while watching logs locally. A production install skips devDependencies
+  // (npm install --omit=dev), so pointing at it unconditionally crashes the
+  // whole process on boot once deployed. Plain JSON logs in production are
+  // also what you actually want there (parseable by log aggregators).
   app.use(
-    pino({
-      transport: {
-        target: 'pino-pretty',
-      },
-    }),
+    pino(
+      process.env.NODE_ENV === 'production'
+        ? {}
+        : { transport: { target: 'pino-pretty' } },
+    ),
   );
 
   app.use(mainRouter);
