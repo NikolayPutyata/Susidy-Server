@@ -8,6 +8,10 @@ const usersSchema = new Schema(
     city: { type: String },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     discount: { type: Number, default: 0, min: 0, max: 100 },
+    // Settable once at the user's own choice; service layer rejects any
+    // further change once this is non-null.
+    birthday: { type: Date, default: null },
+    favorites: { type: [String], default: [] },
   },
   { timestamps: true, versionKey: false },
 );
