@@ -30,16 +30,47 @@ const attachOrderCounts = async (users) => {
   }));
 };
 
-const paginateUsers = async (match, { page = 1, perPage = 10 } = {}) => {
+// Sorting by order count can't be done after the fact like
+// attachOrderCounts does for a single already-fetched page (you'd be
+// sorting only within that page) — it has to be computed, sorted, and
+// paginated in one aggregation so "largest first" actually looks across
+// every customer, not just the current page.
+const paginateUsers = async (
+  match,
+  { page = 1, perPage = 10, sortBy = 'createdAt', sortDir = 'desc' } = {},
+) => {
   const skip = (page - 1) * perPage;
+  const sortField = sortBy === 'ordersCount' ? 'ordersCount' : 'createdAt';
+  const sortOrder = sortDir === 'asc' ? 1 : -1;
 
-  const [users, totalItems] = await Promise.all([
-    UsersCollection.find(match).sort({ createdAt: -1 }).skip(skip).limit(perPage),
-    UsersCollection.countDocuments(match),
+  const [result] = await UsersCollection.aggregate([
+    { $match: match },
+    {
+      $lookup: {
+        from: 'orders',
+        localField: '_id',
+        foreignField: 'user_id',
+        as: 'userOrders',
+      },
+    },
+    { $addFields: { ordersCount: { $size: '$userOrders' } } },
+    { $project: { userOrders: 0, password: 0 } },
+    {
+      $facet: {
+        data: [
+          { $sort: { [sortField]: sortOrder } },
+          { $skip: skip },
+          { $limit: perPage },
+        ],
+        totalCount: [{ $count: 'count' }],
+      },
+    },
   ]);
 
+  const totalItems = result.totalCount[0]?.count || 0;
+
   return {
-    data: await attachOrderCounts(users),
+    data: result.data,
     page,
     perPage,
     totalItems,
@@ -47,15 +78,28 @@ const paginateUsers = async (match, { page = 1, perPage = 10 } = {}) => {
   };
 };
 
-export const getAllUsers = async ({ page = 1, perPage = 10 } = {}) =>
-  paginateUsers({}, { page, perPage });
+export const getAllUsers = async ({
+  page = 1,
+  perPage = 10,
+  sortBy,
+  sortDir,
+} = {}) => paginateUsers({}, { page, perPage, sortBy, sortDir });
 
-export const searchUsersByPhone = async ({ phoneNumber, page = 1, perPage = 10 } = {}) => {
+export const searchUsersByPhone = async ({
+  phoneNumber,
+  page = 1,
+  perPage = 10,
+  sortBy,
+  sortDir,
+} = {}) => {
   if (!phoneNumber) {
     throw createHttpError(400, 'phone query parameter is required');
   }
 
-  return paginateUsers({ phoneNumber: { $regex: phoneNumber } }, { page, perPage });
+  return paginateUsers(
+    { phoneNumber: { $regex: phoneNumber } },
+    { page, perPage, sortBy, sortDir },
+  );
 };
 
 export const updateUserDiscount = async (userId, discount) => {
@@ -75,6 +119,14 @@ export const updateUserDiscount = async (userId, discount) => {
 // Used by the admin export: "customers" means people who placed at least
 // one order, optionally narrowed to those who ordered within [from, to]
 // and/or in one city. Omitting a filter means no restriction on it.
+//
+// The set of matched users was always correct (it's exactly those with a
+// matching order), but each user's *displayed* city used to come from the
+// user's own `city` field — set once at registration (if at all) and
+// completely unrelated to which city's filter actually matched them. A
+// guest checkout never sets it, so most rows showed a blank or stale city
+// regardless of which city was exported. Returning each user's actual
+// ordered-in cities (scoped to the same filter) fixes that at the source.
 export const getUsersWhoOrderedInRange = async ({ from, to, city } = {}) => {
   const match = {};
 
@@ -86,9 +138,23 @@ export const getUsersWhoOrderedInRange = async ({ from, to, city } = {}) => {
 
   if (city) match.city = city;
 
-  const userIds = await OrdersCollection.distinct('user_id', match);
+  const grouped = await OrdersCollection.aggregate([
+    { $match: match },
+    { $group: { _id: '$user_id', cities: { $addToSet: '$city' } } },
+  ]);
 
-  return await UsersCollection.find({ _id: { $in: userIds } }).sort({
-    name: 1,
-  });
+  const citiesByUserId = new Map(
+    grouped.map((entry) => [String(entry._id), entry.cities]),
+  );
+
+  const users = await UsersCollection.find({
+    _id: { $in: grouped.map((entry) => entry._id) },
+  }).sort({ name: 1 });
+
+  const withCounts = await attachOrderCounts(users);
+
+  return withCounts.map((user) => ({
+    ...user,
+    orderedCities: citiesByUserId.get(String(user._id)) || [],
+  }));
 };

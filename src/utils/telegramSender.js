@@ -1,4 +1,5 @@
 import { Telegraf } from 'telegraf';
+import { CITY_LABELS } from '../constants/index.js';
 
 const defaultBot = {
   token: process.env.TELEGRAM_KEY,
@@ -48,8 +49,6 @@ const resolveBot = (order) => {
   }
   return defaultBot;
 };
-
-const CITY_LABELS = { kyiv: 'Київ', kharkiv: 'Харків' };
 
 const formatRequestedTime = (data) => {
   if (!data.requestedTime) return 'не вказано';

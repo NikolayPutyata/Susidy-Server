@@ -4,12 +4,18 @@ import {
   searchUsersByPhone,
   updateUserDiscount,
 } from '../services/users.js';
+import { CITY_LABELS } from '../constants/index.js';
 
 export const getAllUsersController = async (req, res) => {
   const page = Number(req.query.page) || 1;
   const perPage = Number(req.query.perPage) || 10;
 
-  const result = await getAllUsers({ page, perPage });
+  const result = await getAllUsers({
+    page,
+    perPage,
+    sortBy: req.query.sortBy,
+    sortDir: req.query.sortDir,
+  });
 
   res.status(200).json({ status: 200, ...result });
 };
@@ -22,14 +28,21 @@ export const searchUsersController = async (req, res) => {
     phoneNumber: req.query.phone,
     page,
     perPage,
+    sortBy: req.query.sortBy,
+    sortDir: req.query.sortDir,
   });
 
   res.status(200).json({ status: 200, ...result });
 };
 
+// Ukrainian/European Excel treats "," as the decimal separator, so a
+// comma-delimited CSV opened directly (double-click) dumps every column
+// into one — ";" is the delimiter Excel actually expects in that locale.
+const CSV_DELIMITER = ';';
+
 const escapeCsvValue = (value) => {
   const str = String(value ?? '');
-  return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+  return /[;"\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
 };
 
 export const exportUsersController = async (req, res) => {
@@ -37,12 +50,18 @@ export const exportUsersController = async (req, res) => {
 
   const users = await getUsersWhoOrderedInRange({ from, to, city });
 
-  const header = ["Ім'я", 'Номер', 'Місто'].join(',');
-  const rows = users.map((user) =>
-    [user.name, user.phoneNumber, user.city || '']
-      .map(escapeCsvValue)
-      .join(','),
+  const header = ["Ім'я", 'Телефон', 'Місто', 'Кількість замовлень', 'Знижка, %'].join(
+    CSV_DELIMITER,
   );
+  const rows = users.map((user) => {
+    const cityLabel = user.orderedCities
+      .map((c) => CITY_LABELS[c] || c)
+      .join(', ');
+
+    return [user.name, user.phoneNumber, cityLabel, user.ordersCount, user.discount]
+      .map(escapeCsvValue)
+      .join(CSV_DELIMITER);
+  });
   // Leading BOM so Excel opens the UTF-8 (Cyrillic) file correctly.
   const csv = '﻿' + [header, ...rows].join('\r\n');
 
