@@ -102,6 +102,57 @@ export const searchUsersByPhone = async ({
   );
 };
 
+// The client can only ever set this once — any later attempt (even to the
+// same value) is rejected rather than silently ignored, so the user can't
+// be surprised by a formerly-editable field quietly becoming read-only.
+export const setUserBirthday = async (userId, birthday) => {
+  const user = await UsersCollection.findById(userId);
+
+  if (!user) {
+    throw createHttpError(404, 'User not found');
+  }
+
+  if (user.birthday) {
+    throw createHttpError(
+      409,
+      'День народження вже вказано і його не можна змінити',
+    );
+  }
+
+  user.birthday = birthday;
+  await user.save();
+
+  return user;
+};
+
+export const addFavoriteProduct = async (userId, productId) => {
+  const user = await UsersCollection.findByIdAndUpdate(
+    userId,
+    { $addToSet: { favorites: productId } },
+    { new: true },
+  );
+
+  if (!user) {
+    throw createHttpError(404, 'User not found');
+  }
+
+  return user;
+};
+
+export const removeFavoriteProduct = async (userId, productId) => {
+  const user = await UsersCollection.findByIdAndUpdate(
+    userId,
+    { $pull: { favorites: productId } },
+    { new: true },
+  );
+
+  if (!user) {
+    throw createHttpError(404, 'User not found');
+  }
+
+  return user;
+};
+
 export const updateUserDiscount = async (userId, discount) => {
   const user = await UsersCollection.findByIdAndUpdate(
     userId,

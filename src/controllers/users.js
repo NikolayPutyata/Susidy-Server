@@ -1,7 +1,10 @@
 import {
+  addFavoriteProduct,
   getAllUsers,
   getUsersWhoOrderedInRange,
+  removeFavoriteProduct,
   searchUsersByPhone,
+  setUserBirthday,
   updateUserDiscount,
 } from '../services/users.js';
 import { CITY_LABELS } from '../constants/index.js';
@@ -68,6 +71,24 @@ export const exportUsersController = async (req, res) => {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="customers.csv"');
   res.status(200).send(csv);
+};
+
+export const updateMyBirthdayController = async (req, res) => {
+  const user = await setUserBirthday(req.user._id, req.body.birthday);
+
+  res.status(200).json({ status: 200, data: user });
+};
+
+export const addMyFavoriteController = async (req, res) => {
+  const user = await addFavoriteProduct(req.user._id, req.params.productId);
+
+  res.status(200).json({ status: 200, data: user });
+};
+
+export const removeMyFavoriteController = async (req, res) => {
+  const user = await removeFavoriteProduct(req.user._id, req.params.productId);
+
+  res.status(200).json({ status: 200, data: user });
 };
 
 export const updateUserDiscountController = async (req, res) => {
