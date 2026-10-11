@@ -37,6 +37,22 @@ export const updateProduct = async (productId, payload) => {
   return product;
 };
 
+export const setProductStopStatus = async (productId, pickupPointId, stopped) => {
+  const update = stopped
+    ? { $addToSet: { stoppedPoints: pickupPointId } }
+    : { $pull: { stoppedPoints: pickupPointId } };
+
+  const product = await ProductsCollection.findByIdAndUpdate(productId, update, {
+    new: true,
+  });
+
+  if (!product) {
+    throw createHttpError(404, 'Product not found');
+  }
+
+  return product;
+};
+
 export const deleteProduct = async (productId) => {
   const product = await ProductsCollection.findByIdAndDelete(productId);
 

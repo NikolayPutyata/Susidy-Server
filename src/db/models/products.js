@@ -24,6 +24,10 @@ const productSchema = new Schema(
     images: { type: [String], required: true },
     description: { type: String },
     weight: { type: Number },
+    // Pickup point IDs where this item is currently "put on stop" by an
+    // admin — availability elsewhere (other points, delivery) is
+    // unaffected.
+    stoppedPoints: { type: [String], default: [] },
   },
   { timestamps: true, versionKey: false },
 );

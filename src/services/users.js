@@ -15,32 +15,42 @@ export const findOrCreateUserByPhone = async ({ name, phoneNumber }) => {
 const attachOrderCounts = async (users) => {
   const ids = users.map((user) => user._id);
 
-  const counts = await OrdersCollection.aggregate([
+  const stats = await OrdersCollection.aggregate([
     { $match: { user_id: { $in: ids } } },
-    { $group: { _id: '$user_id', count: { $sum: 1 } } },
+    {
+      $group: {
+        _id: '$user_id',
+        count: { $sum: 1 },
+        totalSpent: { $sum: '$total' },
+      },
+    },
   ]);
 
-  const countByUserId = new Map(
-    counts.map((entry) => [String(entry._id), entry.count]),
-  );
+  const statsByUserId = new Map(stats.map((entry) => [String(entry._id), entry]));
 
-  return users.map((user) => ({
-    ...user.toJSON(),
-    ordersCount: countByUserId.get(String(user._id)) || 0,
-  }));
+  return users.map((user) => {
+    const stat = statsByUserId.get(String(user._id));
+    return {
+      ...user.toJSON(),
+      ordersCount: stat?.count || 0,
+      totalSpent: stat?.totalSpent || 0,
+    };
+  });
 };
 
-// Sorting by order count can't be done after the fact like
+const SORTABLE_FIELDS = ['ordersCount', 'totalSpent'];
+
+// Sorting by a computed field can't be done after the fact like
 // attachOrderCounts does for a single already-fetched page (you'd be
 // sorting only within that page) — it has to be computed, sorted, and
 // paginated in one aggregation so "largest first" actually looks across
 // every customer, not just the current page.
 const paginateUsers = async (
   match,
-  { page = 1, perPage = 10, sortBy = 'createdAt', sortDir = 'desc' } = {},
+  { page = 1, perPage = 20, sortBy = 'createdAt', sortDir = 'desc' } = {},
 ) => {
   const skip = (page - 1) * perPage;
-  const sortField = sortBy === 'ordersCount' ? 'ordersCount' : 'createdAt';
+  const sortField = SORTABLE_FIELDS.includes(sortBy) ? sortBy : 'createdAt';
   const sortOrder = sortDir === 'asc' ? 1 : -1;
 
   const [result] = await UsersCollection.aggregate([
@@ -53,7 +63,12 @@ const paginateUsers = async (
         as: 'userOrders',
       },
     },
-    { $addFields: { ordersCount: { $size: '$userOrders' } } },
+    {
+      $addFields: {
+        ordersCount: { $size: '$userOrders' },
+        totalSpent: { $sum: '$userOrders.total' },
+      },
+    },
     { $project: { userOrders: 0, password: 0 } },
     {
       $facet: {
@@ -80,7 +95,7 @@ const paginateUsers = async (
 
 export const getAllUsers = async ({
   page = 1,
-  perPage = 10,
+  perPage = 20,
   sortBy,
   sortDir,
 } = {}) => paginateUsers({}, { page, perPage, sortBy, sortDir });
@@ -88,7 +103,7 @@ export const getAllUsers = async ({
 export const searchUsersByPhone = async ({
   phoneNumber,
   page = 1,
-  perPage = 10,
+  perPage = 20,
   sortBy,
   sortDir,
 } = {}) => {
@@ -145,6 +160,18 @@ export const removeFavoriteProduct = async (userId, productId) => {
     { $pull: { favorites: productId } },
     { new: true },
   );
+
+  if (!user) {
+    throw createHttpError(404, 'User not found');
+  }
+
+  return user;
+};
+
+export const updateUserProfile = async (userId, payload) => {
+  const user = await UsersCollection.findByIdAndUpdate(userId, payload, {
+    new: true,
+  });
 
   if (!user) {
     throw createHttpError(404, 'User not found');

@@ -6,12 +6,13 @@ import {
   searchUsersByPhone,
   setUserBirthday,
   updateUserDiscount,
+  updateUserProfile,
 } from '../services/users.js';
 import { CITY_LABELS } from '../constants/index.js';
 
 export const getAllUsersController = async (req, res) => {
   const page = Number(req.query.page) || 1;
-  const perPage = Number(req.query.perPage) || 10;
+  const perPage = Number(req.query.perPage) || 20;
 
   const result = await getAllUsers({
     page,
@@ -25,7 +26,7 @@ export const getAllUsersController = async (req, res) => {
 
 export const searchUsersController = async (req, res) => {
   const page = Number(req.query.page) || 1;
-  const perPage = Number(req.query.perPage) || 10;
+  const perPage = Number(req.query.perPage) || 20;
 
   const result = await searchUsersByPhone({
     phoneNumber: req.query.phone,
@@ -43,26 +44,52 @@ export const searchUsersController = async (req, res) => {
 // into one — ";" is the delimiter Excel actually expects in that locale.
 const CSV_DELIMITER = ';';
 
+// Excel auto-detects a column's type from its content: a phone number
+// like "0991234567" looks numeric, so it loses the leading zero and gets
+// squeezed into scientific notation once the column is narrowed, with a
+// "Number Stored as Text" warning badge on top. Wrapping the value as an
+// explicit text-literal formula (="...") makes Excel treat it as text at
+// parse time, with no warning badge — unlike a plain text cell that merely
+// looks like a number. Applied to every column per the same request.
+const toExcelTextFormula = (value) => {
+  const str = String(value ?? '').replace(/"/g, '""');
+  return `="${str}"`;
+};
+
 const escapeCsvValue = (value) => {
   const str = String(value ?? '');
   return /[;"\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
 };
+
+const toCsvCell = (value) => escapeCsvValue(toExcelTextFormula(value));
 
 export const exportUsersController = async (req, res) => {
   const { from, to, city } = req.query;
 
   const users = await getUsersWhoOrderedInRange({ from, to, city });
 
-  const header = ["Ім'я", 'Телефон', 'Місто', 'Кількість замовлень', 'Знижка, %'].join(
-    CSV_DELIMITER,
-  );
+  const header = [
+    "Ім'я",
+    'Телефон',
+    'Місто',
+    'Кількість замовлень',
+    'Загальна сума замовлень, ₴',
+    'Знижка, %',
+  ].join(CSV_DELIMITER);
   const rows = users.map((user) => {
     const cityLabel = user.orderedCities
       .map((c) => CITY_LABELS[c] || c)
       .join(', ');
 
-    return [user.name, user.phoneNumber, cityLabel, user.ordersCount, user.discount]
-      .map(escapeCsvValue)
+    return [
+      user.name,
+      user.phoneNumber,
+      cityLabel,
+      user.ordersCount,
+      user.totalSpent,
+      user.discount,
+    ]
+      .map(toCsvCell)
       .join(CSV_DELIMITER);
   });
   // Leading BOM so Excel opens the UTF-8 (Cyrillic) file correctly.
@@ -71,6 +98,12 @@ export const exportUsersController = async (req, res) => {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="customers.csv"');
   res.status(200).send(csv);
+};
+
+export const updateMyProfileController = async (req, res) => {
+  const user = await updateUserProfile(req.user._id, req.body);
+
+  res.status(200).json({ status: 200, data: user });
 };
 
 export const updateMyBirthdayController = async (req, res) => {
