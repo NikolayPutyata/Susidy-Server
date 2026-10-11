@@ -66,6 +66,11 @@ const formatFulfillment = (data) => {
   return `Доставка, ${city}, вул. ${data.street}, буд. ${data.building}, ${apartment}`;
 };
 
+const sendVia = ({ token, chatId }, message) =>
+  getBotInstance(token).telegram.sendMessage(chatId, message, {
+    parse_mode: 'Markdown',
+  });
+
 export const sendOrderToTelegram = async (data) => {
   const orderMessage = `
     🛒 Замовлення
@@ -93,12 +98,23 @@ export const sendOrderToTelegram = async (data) => {
     ⏳ **Дата замовлення**: ${new Date(data.createdAt).toLocaleString()}
   `;
 
-  const { token, chatId } = resolveBot(data);
-  const bot = getBotInstance(token);
+  const primary = resolveBot(data);
 
-  const result = await bot.telegram.sendMessage(chatId, orderMessage, {
-    parse_mode: 'Markdown',
-  });
+  try {
+    return await sendVia(primary, orderMessage);
+  } catch (err) {
+    // A misconfigured per-point bot (wrong chat_id, bot not added to that
+    // group, etc.) used to mean the order notification vanished entirely —
+    // resolveBot had already committed to the custom bot, so there was no
+    // second attempt. Falling back to the default bot means a broken
+    // per-point setup degrades to "wrong group" instead of "no one sees
+    // the order at all".
+    if (primary === defaultBot) throw err;
 
-  return result;
+    console.error(
+      `Failed to send via the custom bot for pickupPointId="${data.pickupPointId}" — falling back to the default bot`,
+      err,
+    );
+    return await sendVia(defaultBot, orderMessage);
+  }
 };
