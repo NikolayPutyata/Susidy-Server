@@ -1,5 +1,5 @@
 import createHttpError from 'http-errors';
-import { findNearestPoint } from '../services/locations.js';
+import { findServingPoint } from '../services/locations.js';
 
 // Public, read-only: lets the client show a live "this point will prepare
 // your order" hint while the customer is picking a delivery address. The
@@ -19,7 +19,7 @@ export const getNearestPointController = async (req, res) => {
     throw createHttpError(400, 'city must be "kyiv" or "kharkiv"');
   }
 
-  const nearest = findNearestPoint({ lat, lng, city });
+  const nearest = findServingPoint({ lat, lng, city });
 
   res.status(200).json({ status: 200, data: nearest });
 };
