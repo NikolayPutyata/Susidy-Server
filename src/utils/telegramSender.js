@@ -75,9 +75,11 @@ const formatFulfillment = (data) => {
 
   const extras = data.isPrivateHouse
     ? ['приватний будинок']
-    : [data.apartment ? `кв. ${data.apartment}` : null, data.floor ? `поверх ${data.floor}` : null].filter(
-        Boolean,
-      );
+    : [
+        data.apartment ? `кв. ${data.apartment}` : null,
+        data.entrance ? `під'їзд ${data.entrance}` : null,
+        data.floor ? `поверх ${data.floor}` : null,
+      ].filter(Boolean);
 
   return `Доставка, ${city}, ${addressLine}${extras.length ? `, ${extras.join(', ')}` : ''}`;
 };
