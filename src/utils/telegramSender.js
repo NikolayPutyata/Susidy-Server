@@ -8,8 +8,9 @@ const defaultBot = {
 
 // Кожна з 5 точок самовивозу може мати власний Telegram-бот — заповни
 // відповідні TELEGRAM_KEY_*/TELEGRAM_CHAT_ID_* у .env. Точка без своїх
-// змінних (або замовлення доставкою, для яких точка ще не визначається —
-// див. README) падає в дефолтний бот.
+// змінних падає в дефолтний бот — так само, як замовлення доставкою, чию
+// адресу ще не вдалось прив'язати до жодної точки (немає координат або
+// геокодування не спрацювало).
 const pointBots = {
   'kyiv-berestejskyi': {
     token: process.env.TELEGRAM_KEY_KYIV_BERESTEJSKYI,
@@ -43,7 +44,10 @@ const getBotInstance = (token) => {
 };
 
 const resolveBot = (order) => {
-  if (order.fulfillment === 'pickup' && order.pickupPointId) {
+  // pickupPointId now means "which point prepares this" for delivery
+  // orders too (resolved server-side from the geocoded address), not just
+  // which counter the customer walks up to for pickup.
+  if (order.pickupPointId) {
     const custom = pointBots[order.pickupPointId];
     if (custom?.token && custom?.chatId) return custom;
   }

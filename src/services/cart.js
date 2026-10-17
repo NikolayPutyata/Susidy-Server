@@ -4,6 +4,7 @@ import { OrdersCollection } from '../db/models/orders.js';
 import { ProductsCollection } from '../db/models/products.js';
 import { sendOrderToTelegram } from '../utils/telegramSender.js';
 import { findOrCreateUserByPhone } from './users.js';
+import { findNearestPoint } from './locations.js';
 
 export const getMyCart = async (userId) => {
   const cart = await CartsCollection.findOne({ user_id: String(userId) });
@@ -100,6 +101,8 @@ export const createOrder = async (
     isPrivateHouse,
     pickupAddress,
     pickupPointId,
+    deliveryLat,
+    deliveryLng,
     requestedTime,
     cutlery,
     details,
@@ -127,14 +130,32 @@ export const createOrder = async (
     orderItems = items;
   }
 
-  // An admin can "stop" a position at one pickup point while it stays
-  // available everywhere else — only relevant once the customer has
-  // actually picked that point, so delivery orders and orders without a
-  // point yet skip this check entirely.
-  if (fulfillment === 'pickup' && pickupPointId) {
+  // For pickup, the customer picked the point themselves — trust it as-is.
+  // For delivery, pickupPointId means "which point will prepare this" and
+  // is never taken from the client: it's recomputed here from the geocoded
+  // address, the same way resolveBot's Telegram routing can't trust a
+  // client-claimed point either. No coordinates yet (feature not used, or
+  // that city has no geocoded points) just leaves it undetermined, same as
+  // before this field existed.
+  const hasDeliveryLocation =
+    fulfillment === 'delivery' &&
+    typeof deliveryLat === 'number' &&
+    typeof deliveryLng === 'number';
+
+  const resolvedPickupPointId =
+    fulfillment === 'pickup'
+      ? pickupPointId
+      : hasDeliveryLocation
+        ? findNearestPoint({ lat: deliveryLat, lng: deliveryLng, city })?.pointId
+        : undefined;
+
+  // An admin can "stop" a position at one specific point while it stays
+  // available everywhere else — applies once we know which point is
+  // actually preparing the order, pickup or delivery alike.
+  if (resolvedPickupPointId) {
     const stoppedProducts = await ProductsCollection.find({
       _id: { $in: orderItems.map((item) => item.product_id) },
-      stoppedPoints: pickupPointId,
+      stoppedPoints: resolvedPickupPointId,
     });
 
     if (stoppedProducts.length > 0) {
@@ -166,7 +187,10 @@ export const createOrder = async (
     apartment,
     isPrivateHouse,
     pickupAddress,
-    pickupPointId,
+    pickupPointId: resolvedPickupPointId,
+    deliveryLocation: hasDeliveryLocation
+      ? { lat: deliveryLat, lng: deliveryLng }
+      : undefined,
     requestedTime,
     cutlery,
     details,

@@ -19,8 +19,11 @@ const paginateOrders = async (match, { page = 1, perPage = 10 } = {}) => {
 };
 
 // day: 'today' | 'yesterday'. pickupPointId optionally narrows to orders
-// picked up from that one point (delivery orders aren't tied to a point
-// yet, so they're excluded whenever a point filter is applied).
+// prepared by that one point — pickup orders the customer chose directly,
+// delivery orders assigned the nearest point from their geocoded address.
+// A delivery order without a resolved point (no coordinates yet) simply
+// has no pickupPointId, so it's excluded whenever a point filter is
+// applied, same as before this field existed for delivery.
 export const getOrdersByDay = async ({
   day = 'today',
   pickupPointId,
