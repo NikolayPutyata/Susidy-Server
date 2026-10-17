@@ -12,6 +12,28 @@ const usersSchema = new Schema(
     // further change once this is non-null.
     birthday: { type: Date, default: null },
     favorites: { type: [String], default: [] },
+    // Up to MAX_SAVED_ADDRESSES (see services/users.js) — enforced in the
+    // service, not here, so the error message stays in one place. Each
+    // gets its own _id (standard Mongoose subdocument behavior) so the
+    // client can reference one for delete/set-default.
+    savedAddresses: {
+      type: [
+        {
+          city: { type: String, enum: ['kyiv', 'kharkiv'], required: true },
+          street: { type: String, required: true },
+          building: { type: String },
+          apartment: { type: String },
+          entrance: { type: String },
+          floor: { type: String },
+          isPrivateHouse: { type: Boolean, default: false },
+          lat: { type: Number },
+          lng: { type: Number },
+          formattedAddress: { type: String },
+          isDefault: { type: Boolean, default: false },
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true, versionKey: false },
 );

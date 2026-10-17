@@ -1,9 +1,12 @@
 import {
   addFavoriteProduct,
+  addSavedAddress,
   getAllUsers,
   getUsersWhoOrderedInRange,
   removeFavoriteProduct,
+  removeSavedAddress,
   searchUsersByPhone,
+  setDefaultSavedAddress,
   setUserBirthday,
   updateUserDiscount,
   updateUserProfile,
@@ -120,6 +123,24 @@ export const addMyFavoriteController = async (req, res) => {
 
 export const removeMyFavoriteController = async (req, res) => {
   const user = await removeFavoriteProduct(req.user._id, req.params.productId);
+
+  res.status(200).json({ status: 200, data: user });
+};
+
+export const addMySavedAddressController = async (req, res) => {
+  const user = await addSavedAddress(req.user._id, req.body);
+
+  res.status(201).json({ status: 201, data: user });
+};
+
+export const removeMySavedAddressController = async (req, res) => {
+  const user = await removeSavedAddress(req.user._id, req.params.addressId);
+
+  res.status(200).json({ status: 200, data: user });
+};
+
+export const setMyDefaultSavedAddressController = async (req, res) => {
+  const user = await setDefaultSavedAddress(req.user._id, req.params.addressId);
 
   res.status(200).json({ status: 200, data: user });
 };

@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import { validateBody } from '../middlewares/validateBody.js';
 import { loginUserSchema, registerUserSchema } from '../validation/auth.js';
-import { birthdayUpdateSchema, updateProfileSchema } from '../validation/users.js';
+import {
+  birthdayUpdateSchema,
+  savedAddressSchema,
+  updateProfileSchema,
+} from '../validation/users.js';
 import { ctrlWrapper } from '../utils/ctrlWrapper.js';
 import { requireAuth } from '../middlewares/authentication.js';
 import { isValidId } from '../middlewares/isValidId.js';
@@ -14,7 +18,10 @@ import {
 } from '../controllers/auth.js';
 import {
   addMyFavoriteController,
+  addMySavedAddressController,
   removeMyFavoriteController,
+  removeMySavedAddressController,
+  setMyDefaultSavedAddressController,
   updateMyBirthdayController,
   updateMyProfileController,
 } from '../controllers/users.js';
@@ -49,6 +56,27 @@ router.delete(
   requireAuth,
   isValidId('productId'),
   ctrlWrapper(removeMyFavoriteController),
+);
+
+router.post(
+  '/me/addresses',
+  requireAuth,
+  validateBody(savedAddressSchema),
+  ctrlWrapper(addMySavedAddressController),
+);
+
+router.delete(
+  '/me/addresses/:addressId',
+  requireAuth,
+  isValidId('addressId'),
+  ctrlWrapper(removeMySavedAddressController),
+);
+
+router.patch(
+  '/me/addresses/:addressId/default',
+  requireAuth,
+  isValidId('addressId'),
+  ctrlWrapper(setMyDefaultSavedAddressController),
 );
 
 router.post(

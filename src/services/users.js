@@ -168,6 +168,84 @@ export const removeFavoriteProduct = async (userId, productId) => {
   return user;
 };
 
+const MAX_SAVED_ADDRESSES = 3;
+
+export const addSavedAddress = async (userId, address) => {
+  const user = await UsersCollection.findById(userId);
+
+  if (!user) {
+    throw createHttpError(404, 'User not found');
+  }
+
+  if (user.savedAddresses.length >= MAX_SAVED_ADDRESSES) {
+    throw createHttpError(
+      409,
+      `Можна зберегти не більше ${MAX_SAVED_ADDRESSES} адрес`,
+    );
+  }
+
+  // The very first saved address is the default automatically — nothing
+  // to pick from otherwise.
+  const isDefault = address.isDefault || user.savedAddresses.length === 0;
+  if (isDefault) {
+    user.savedAddresses.forEach((existing) => {
+      existing.isDefault = false;
+    });
+  }
+
+  user.savedAddresses.push({ ...address, isDefault });
+  await user.save();
+
+  return user;
+};
+
+export const removeSavedAddress = async (userId, addressId) => {
+  const user = await UsersCollection.findById(userId);
+
+  if (!user) {
+    throw createHttpError(404, 'User not found');
+  }
+
+  const target = user.savedAddresses.id(addressId);
+  if (!target) {
+    throw createHttpError(404, 'Address not found');
+  }
+
+  const wasDefault = target.isDefault;
+  user.savedAddresses.pull({ _id: addressId });
+
+  // Promote whichever one is left first, so there's never a saved list
+  // with none marked default (confusing the client's own "which one is
+  // selected" state) as long as at least one address remains.
+  if (wasDefault && user.savedAddresses.length > 0) {
+    user.savedAddresses[0].isDefault = true;
+  }
+
+  await user.save();
+
+  return user;
+};
+
+export const setDefaultSavedAddress = async (userId, addressId) => {
+  const user = await UsersCollection.findById(userId);
+
+  if (!user) {
+    throw createHttpError(404, 'User not found');
+  }
+
+  const target = user.savedAddresses.id(addressId);
+  if (!target) {
+    throw createHttpError(404, 'Address not found');
+  }
+
+  user.savedAddresses.forEach((address) => {
+    address.isDefault = String(address._id) === String(addressId);
+  });
+  await user.save();
+
+  return user;
+};
+
 export const updateUserProfile = async (userId, payload) => {
   const user = await UsersCollection.findByIdAndUpdate(userId, payload, {
     new: true,
