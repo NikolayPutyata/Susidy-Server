@@ -61,6 +61,7 @@ export const createOrderController = async (req, res) => {
     street: req.body.street,
     building: req.body.building,
     apartment: req.body.apartment,
+    entrance: req.body.entrance,
     floor: req.body.floor,
     isPrivateHouse: req.body.isPrivateHouse,
     pickupAddress: req.body.pickupAddress,

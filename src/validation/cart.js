@@ -28,6 +28,7 @@ export const checkoutValidSchema = Joi.object({
   street: Joi.string().allow(''),
   building: Joi.string().allow(''),
   apartment: Joi.string().allow(''),
+  entrance: Joi.string().allow(''),
   floor: Joi.string().allow(''),
   // The address picker's own tracked display value — duplicates `street`
   // in practice (both hold the full formatted address), kept separate on
