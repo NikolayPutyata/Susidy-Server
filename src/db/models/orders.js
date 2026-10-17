@@ -17,6 +17,14 @@ const orderSchema = new Schema(
     isPrivateHouse: { type: Boolean, default: false },
     pickupAddress: { type: String },
     pickupPointId: { type: String },
+    // Set for delivery orders once the customer picks an address via
+    // autocomplete or the map — used server-side to compute pickupPointId
+    // (which point prepares it), and kept on the order for reference.
+    deliveryLocation: {
+      lat: { type: Number },
+      lng: { type: Number },
+      _id: false,
+    },
     requestedTime: { type: String },
     cutlery: { type: Number, default: 1 },
     details: { type: String },

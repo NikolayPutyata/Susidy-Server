@@ -31,6 +31,12 @@ export const checkoutValidSchema = Joi.object({
   isPrivateHouse: Joi.boolean(),
   pickupAddress: Joi.string().allow(''),
   pickupPointId: Joi.string().allow(''),
+  // Optional: the geocoded delivery address picked via autocomplete or the
+  // map. When present, the service recomputes the nearest serving point
+  // from these itself — pickupPointId above is never trusted directly for
+  // a delivery order, only set by the client for pickup.
+  deliveryLat: Joi.number(),
+  deliveryLng: Joi.number(),
   // 'asap' is only meaningful for delivery — pickup always needs a real slot
   // since staff must have the order ready by the time the customer arrives.
   requestedTime: Joi.string()
