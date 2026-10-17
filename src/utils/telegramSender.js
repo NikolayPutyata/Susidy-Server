@@ -66,8 +66,20 @@ const formatFulfillment = (data) => {
     return `Самовивіз, ${city}, ${data.pickupAddress || 'адреса не вказана'}`;
   }
 
-  const apartment = data.isPrivateHouse ? 'приватний будинок' : `кв. ${data.apartment}`;
-  return `Доставка, ${city}, вул. ${data.street}, буд. ${data.building}, ${apartment}`;
+  // The address picker puts the full street+building address into
+  // `street` and leaves `building` empty; older orders (and the manual
+  // fallback when Maps fails to load) still store them separately.
+  const addressLine = data.building
+    ? `вул. ${data.street}, буд. ${data.building}`
+    : data.street;
+
+  const extras = data.isPrivateHouse
+    ? ['приватний будинок']
+    : [data.apartment ? `кв. ${data.apartment}` : null, data.floor ? `поверх ${data.floor}` : null].filter(
+        Boolean,
+      );
+
+  return `Доставка, ${city}, ${addressLine}${extras.length ? `, ${extras.join(', ')}` : ''}`;
 };
 
 const sendVia = ({ token, chatId }, message) =>
