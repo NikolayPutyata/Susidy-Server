@@ -4,7 +4,7 @@ import { OrdersCollection } from '../db/models/orders.js';
 import { ProductsCollection } from '../db/models/products.js';
 import { sendOrderToTelegram } from '../utils/telegramSender.js';
 import { findOrCreateUserByPhone } from './users.js';
-import { findNearestPoint } from './locations.js';
+import { findServingPoint } from './locations.js';
 
 export const getMyCart = async (userId) => {
   const cart = await CartsCollection.findOne({ user_id: String(userId) });
@@ -148,7 +148,7 @@ export const createOrder = async (
     fulfillment === 'pickup'
       ? pickupPointId
       : hasDeliveryLocation
-        ? findNearestPoint({ lat: deliveryLat, lng: deliveryLng, city })?.pointId
+        ? findServingPoint({ lat: deliveryLat, lng: deliveryLng, city })?.pointId
         : undefined;
 
   // An admin can "stop" a position at one specific point while it stays
