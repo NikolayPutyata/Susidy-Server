@@ -24,6 +24,11 @@ const productSchema = new Schema(
     images: { type: [String], required: true },
     description: { type: String },
     weight: { type: Number },
+    // Ingredients — for a set, the admin lists the rolls/items it's made
+    // of here too, as free text (no structured reference to other
+    // products — simplest way to describe a set's contents).
+    composition: { type: String },
+    allergens: { type: String },
     // Pickup point IDs where this item is currently "put on stop" by an
     // admin — availability elsewhere (other points, delivery) is
     // unaffected.
