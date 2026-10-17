@@ -14,6 +14,7 @@ const orderSchema = new Schema(
     street: { type: String },
     building: { type: String },
     apartment: { type: String },
+    floor: { type: String },
     isPrivateHouse: { type: Boolean, default: false },
     pickupAddress: { type: String },
     pickupPointId: { type: String },

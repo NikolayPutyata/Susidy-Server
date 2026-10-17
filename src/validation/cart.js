@@ -28,6 +28,7 @@ export const checkoutValidSchema = Joi.object({
   street: Joi.string().allow(''),
   building: Joi.string().allow(''),
   apartment: Joi.string().allow(''),
+  floor: Joi.string().allow(''),
   isPrivateHouse: Joi.boolean(),
   pickupAddress: Joi.string().allow(''),
   pickupPointId: Joi.string().allow(''),
