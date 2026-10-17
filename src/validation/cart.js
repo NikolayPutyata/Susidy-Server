@@ -29,6 +29,11 @@ export const checkoutValidSchema = Joi.object({
   building: Joi.string().allow(''),
   apartment: Joi.string().allow(''),
   floor: Joi.string().allow(''),
+  // The address picker's own tracked display value — duplicates `street`
+  // in practice (both hold the full formatted address), kept separate on
+  // the client only to drive the input's controlled value. Accepted here,
+  // not stored on the order.
+  formattedAddress: Joi.string().allow(''),
   isPrivateHouse: Joi.boolean(),
   pickupAddress: Joi.string().allow(''),
   pickupPointId: Joi.string().allow(''),
