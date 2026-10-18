@@ -3,6 +3,7 @@ import {
   createProduct,
   deleteProduct,
   getAllProducts,
+  getChefsPickProducts,
   getFeaturedProducts,
   getProductById,
   getProductsByCategory,
@@ -19,6 +20,12 @@ export const getAllProductsController = async (req, res) => {
 
 export const getFeaturedProductsController = async (req, res) => {
   const products = await getFeaturedProducts();
+
+  res.status(200).json({ status: 200, data: products });
+};
+
+export const getChefsPickProductsController = async (req, res) => {
+  const products = await getChefsPickProducts();
 
   res.status(200).json({ status: 200, data: products });
 };

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getAllProductsController,
+  getChefsPickProductsController,
   getFeaturedProductsController,
   getProductByIdController,
   getProductsByCategoryController,
@@ -12,9 +13,10 @@ const router = Router();
 
 router.get('/all', ctrlWrapper(getAllProductsController));
 
-// Must come before /:productId — otherwise "featured" itself gets routed
-// there as a (invalid) product id.
+// Must come before /:productId — otherwise "featured"/"chefs-picks" would
+// get routed there as an (invalid) product id.
 router.get('/featured', ctrlWrapper(getFeaturedProductsController));
+router.get('/chefs-picks', ctrlWrapper(getChefsPickProductsController));
 
 router.get(
   '/category/:category',
