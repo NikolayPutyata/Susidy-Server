@@ -53,7 +53,10 @@ const CSV_DELIMITER = ';';
 // "Number Stored as Text" warning badge on top. Wrapping the value as an
 // explicit text-literal formula (="...") makes Excel treat it as text at
 // parse time, with no warning badge — unlike a plain text cell that merely
-// looks like a number. Applied to every column per the same request.
+// looks like a number. ONLY for columns that are naturally numeric-looking
+// text (phone numbers) — applying it to genuinely numeric columns (order
+// count, total spent, discount) would force those into text too, blocking
+// SUM/sort/filter on them in Excel for no reason.
 const toExcelTextFormula = (value) => {
   const str = String(value ?? '').replace(/"/g, '""');
   return `="${str}"`;
@@ -64,7 +67,8 @@ const escapeCsvValue = (value) => {
   return /[;"\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
 };
 
-const toCsvCell = (value) => escapeCsvValue(toExcelTextFormula(value));
+const toCsvCell = (value) => escapeCsvValue(value);
+const toCsvTextCell = (value) => escapeCsvValue(toExcelTextFormula(value));
 
 export const exportUsersController = async (req, res) => {
   const { from, to, city } = req.query;
@@ -85,15 +89,13 @@ export const exportUsersController = async (req, res) => {
       .join(', ');
 
     return [
-      user.name,
-      user.phoneNumber,
-      cityLabel,
-      user.ordersCount,
-      user.totalSpent,
-      user.discount,
-    ]
-      .map(toCsvCell)
-      .join(CSV_DELIMITER);
+      toCsvCell(user.name),
+      toCsvTextCell(user.phoneNumber),
+      toCsvCell(cityLabel),
+      toCsvCell(user.ordersCount),
+      toCsvCell(user.totalSpent),
+      toCsvCell(user.discount),
+    ].join(CSV_DELIMITER);
   });
   // Leading BOM so Excel opens the UTF-8 (Cyrillic) file correctly.
   const csv = '﻿' + [header, ...rows].join('\r\n');
