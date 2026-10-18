@@ -38,6 +38,11 @@ const productSchema = new Schema(
     // admin — availability elsewhere (other points, delivery) is
     // unaffected.
     stoppedPoints: { type: [String], default: [] },
+    // Manually curated for the homepage's "Обирають найчастіше" carousel —
+    // featuredOrder is a plain number the admin sets by hand (lower sorts
+    // first), same pattern as banners' own `order`.
+    featured: { type: Boolean, default: false },
+    featuredOrder: { type: Number, default: 0 },
   },
   { timestamps: true, versionKey: false },
 );

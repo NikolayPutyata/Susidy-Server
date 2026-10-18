@@ -3,6 +3,7 @@ import {
   createProduct,
   deleteProduct,
   getAllProducts,
+  getFeaturedProducts,
   getProductById,
   getProductsByCategory,
   setProductStopStatus,
@@ -12,6 +13,12 @@ import { uploadImages } from '../utils/cloudinary.js';
 
 export const getAllProductsController = async (req, res) => {
   const products = await getAllProducts();
+
+  res.status(200).json({ status: 200, data: products });
+};
+
+export const getFeaturedProductsController = async (req, res) => {
+  const products = await getFeaturedProducts();
 
   res.status(200).json({ status: 200, data: products });
 };

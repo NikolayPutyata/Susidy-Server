@@ -21,11 +21,18 @@ import {
   searchOrdersController,
 } from '../controllers/orders.js';
 import {
+  createBannerController,
+  deleteBannerController,
+  getAllBannersController,
+  updateBannerController,
+} from '../controllers/banners.js';
+import {
   createProductSchema,
   productStopSchema,
   updateProductSchema,
 } from '../validation/products.js';
 import { discountUpdateSchema } from '../validation/users.js';
+import { createBannerSchema, updateBannerSchema } from '../validation/banners.js';
 
 const router = Router();
 
@@ -75,5 +82,28 @@ router.patch(
 router.get('/orders/by-day', ctrlWrapper(getOrdersByDayController));
 
 router.get('/orders/search', ctrlWrapper(searchOrdersController));
+
+router.get('/banners', ctrlWrapper(getAllBannersController));
+
+router.post(
+  '/banners',
+  upload.single('image'),
+  validateBody(createBannerSchema),
+  ctrlWrapper(createBannerController),
+);
+
+router.patch(
+  '/banners/:id',
+  isValidId('id'),
+  upload.single('image'),
+  validateBody(updateBannerSchema),
+  ctrlWrapper(updateBannerController),
+);
+
+router.delete(
+  '/banners/:id',
+  isValidId('id'),
+  ctrlWrapper(deleteBannerController),
+);
 
 export default router;
