@@ -15,6 +15,12 @@ export const getFeaturedProducts = async () => {
   });
 };
 
+export const getChefsPickProducts = async () => {
+  return await ProductsCollection.find({ chefsPick: true }).sort({
+    chefsPickOrder: 1,
+  });
+};
+
 export const getProductById = async (productId) => {
   const product = await ProductsCollection.findById(productId);
 

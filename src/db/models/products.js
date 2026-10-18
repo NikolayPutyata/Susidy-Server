@@ -43,6 +43,16 @@ const productSchema = new Schema(
     // first), same pattern as banners' own `order`.
     featured: { type: Boolean, default: false },
     featuredOrder: { type: Number, default: 0 },
+    // Same curation pattern as featured/featuredOrder, for the separate
+    // "Роли від шефа" carousel below the category tiles.
+    chefsPick: { type: Boolean, default: false },
+    chefsPickOrder: { type: Number, default: 0 },
+    // Nutrition per 100g (Б/Ж/В) — optional, filled in by hand per item;
+    // the product detail modal only shows this block when at least one is
+    // set.
+    proteins: { type: Number },
+    fats: { type: Number },
+    carbs: { type: Number },
   },
   { timestamps: true, versionKey: false },
 );
