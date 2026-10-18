@@ -29,6 +29,11 @@ const productSchema = new Schema(
     // products — simplest way to describe a set's contents).
     composition: { type: String },
     allergens: { type: String },
+    // The matching product's id in Poster POS's own menu catalog — set by
+    // hand per item (Poster has no stable way to match by name). Empty
+    // means this item isn't mapped yet; an order containing it just isn't
+    // pushed to Poster (see utils/posterSender.js).
+    posterProductId: { type: String },
     // Pickup point IDs where this item is currently "put on stop" by an
     // admin — availability elsewhere (other points, delivery) is
     // unaffected.

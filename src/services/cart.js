@@ -3,6 +3,7 @@ import { CartsCollection } from '../db/models/carts.js';
 import { OrdersCollection } from '../db/models/orders.js';
 import { ProductsCollection } from '../db/models/products.js';
 import { sendOrderToTelegram } from '../utils/telegramSender.js';
+import { sendOrderToPoster } from '../utils/posterSender.js';
 import { findOrCreateUserByPhone } from './users.js';
 import { findServingPoint } from './locations.js';
 
@@ -208,6 +209,12 @@ export const createOrder = async (
     await sendOrderToTelegram(order);
   } catch (err) {
     console.error('Failed to send order notification to Telegram', err);
+  }
+
+  try {
+    await sendOrderToPoster(order);
+  } catch (err) {
+    console.error('Failed to push order to Poster', err);
   }
 
   if (user) {

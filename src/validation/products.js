@@ -24,6 +24,7 @@ export const createProductSchema = Joi.object({
   weight: Joi.number().min(0),
   composition: Joi.string().allow('').max(1000),
   allergens: Joi.string().allow('').max(500),
+  posterProductId: Joi.string().allow('').max(50),
 });
 
 export const updateProductSchema = Joi.object({
@@ -35,6 +36,7 @@ export const updateProductSchema = Joi.object({
   weight: Joi.number().min(0),
   composition: Joi.string().allow('').max(1000),
   allergens: Joi.string().allow('').max(500),
+  posterProductId: Joi.string().allow('').max(50),
 }).min(1);
 
 export const productStopSchema = Joi.object({
