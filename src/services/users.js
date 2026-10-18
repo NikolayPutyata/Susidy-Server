@@ -1,6 +1,7 @@
 import createHttpError from 'http-errors';
 import { UsersCollection } from '../db/models/user.js';
 import { OrdersCollection } from '../db/models/orders.js';
+import { escapeRegex } from '../utils/escapeRegex.js';
 
 export const findOrCreateUserByPhone = async ({ name, phoneNumber }) => {
   let user = await UsersCollection.findOne({ phoneNumber });
@@ -112,7 +113,7 @@ export const searchUsersByPhone = async ({
   }
 
   return paginateUsers(
-    { phoneNumber: { $regex: phoneNumber } },
+    { phoneNumber: { $regex: escapeRegex(phoneNumber) } },
     { page, perPage, sortBy, sortDir },
   );
 };
@@ -177,26 +178,39 @@ export const addSavedAddress = async (userId, address) => {
     throw createHttpError(404, 'User not found');
   }
 
-  if (user.savedAddresses.length >= MAX_SAVED_ADDRESSES) {
+  // The very first saved address is the default automatically — nothing
+  // to pick from otherwise.
+  const isDefault = address.isDefault || user.savedAddresses.length === 0;
+  if (isDefault) {
+    await UsersCollection.updateOne(
+      { _id: userId },
+      { $set: { 'savedAddresses.$[].isDefault': false } },
+    );
+  }
+
+  // The size limit rides the same atomic update as the push (via $expr on
+  // the query side) instead of a separate find-then-check — two
+  // near-simultaneous requests (double-click, two tabs) each re-evaluate
+  // the array's CURRENT size at the moment they actually run, so the
+  // second one to land can't slip past the limit the first one already
+  // filled.
+  const updated = await UsersCollection.findOneAndUpdate(
+    {
+      _id: userId,
+      $expr: { $lt: [{ $size: '$savedAddresses' }, MAX_SAVED_ADDRESSES] },
+    },
+    { $push: { savedAddresses: { ...address, isDefault } } },
+    { new: true },
+  );
+
+  if (!updated) {
     throw createHttpError(
       409,
       `Можна зберегти не більше ${MAX_SAVED_ADDRESSES} адрес`,
     );
   }
 
-  // The very first saved address is the default automatically — nothing
-  // to pick from otherwise.
-  const isDefault = address.isDefault || user.savedAddresses.length === 0;
-  if (isDefault) {
-    user.savedAddresses.forEach((existing) => {
-      existing.isDefault = false;
-    });
-  }
-
-  user.savedAddresses.push({ ...address, isDefault });
-  await user.save();
-
-  return user;
+  return updated;
 };
 
 export const removeSavedAddress = async (userId, addressId) => {

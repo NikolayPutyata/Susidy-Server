@@ -1,5 +1,6 @@
 import createHttpError from 'http-errors';
 import { OrdersCollection } from '../db/models/orders.js';
+import { escapeRegex } from '../utils/escapeRegex.js';
 
 const paginateOrders = async (match, { page = 1, perPage = 10 } = {}) => {
   const skip = (page - 1) * perPage;
@@ -50,7 +51,10 @@ export const getOrdersByPhone = async ({ phoneNumber, page = 1, perPage = 10 } =
     throw createHttpError(400, 'phone query parameter is required');
   }
 
-  return paginateOrders({ phoneNumber: { $regex: phoneNumber } }, { page, perPage });
+  return paginateOrders(
+    { phoneNumber: { $regex: escapeRegex(phoneNumber) } },
+    { page, perPage },
+  );
 };
 
 export const getMyOrders = async (userId) => {
