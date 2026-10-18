@@ -42,8 +42,12 @@ export const checkoutValidSchema = Joi.object({
   // map. When present, the service recomputes the nearest serving point
   // from these itself — pickupPointId above is never trusted directly for
   // a delivery order, only set by the client for pickup.
-  deliveryLat: Joi.number(),
-  deliveryLng: Joi.number(),
+  // The client's initial form state is `null` (not omitted) until a
+  // delivery address is picked, and sends that literal null for pickup
+  // orders too — Joi.number() alone treats a present null as "not a
+  // number", not as "absent", and rejects it.
+  deliveryLat: Joi.number().allow(null),
+  deliveryLng: Joi.number().allow(null),
   // 'asap' is only meaningful for delivery — pickup always needs a real slot
   // since staff must have the order ready by the time the customer arrives.
   requestedTime: Joi.string()
