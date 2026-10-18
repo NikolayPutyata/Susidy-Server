@@ -9,6 +9,12 @@ export const getProductsByCategory = async (category) => {
   return await ProductsCollection.find({ category });
 };
 
+export const getFeaturedProducts = async () => {
+  return await ProductsCollection.find({ featured: true }).sort({
+    featuredOrder: 1,
+  });
+};
+
 export const getProductById = async (productId) => {
   const product = await ProductsCollection.findById(productId);
 
