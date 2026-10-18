@@ -26,8 +26,12 @@ export const savedAddressSchema = Joi.object({
   entrance: Joi.string().allow(''),
   floor: Joi.string().allow(''),
   isPrivateHouse: Joi.boolean(),
-  lat: Joi.number(),
-  lng: Joi.number(),
+  // Same gap as checkout's deliveryLat/Lng: the client's address form
+  // starts these at null and can still be null when Maps fails to load
+  // (the manual street/building fallback has no coordinates at all) —
+  // Joi.number() alone rejects a present null as "not a number".
+  lat: Joi.number().allow(null),
+  lng: Joi.number().allow(null),
   formattedAddress: Joi.string().allow(''),
   isDefault: Joi.boolean(),
 });

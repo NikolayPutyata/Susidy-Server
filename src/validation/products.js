@@ -21,7 +21,11 @@ export const createProductSchema = Joi.object({
     .valid(...categories)
     .default('other'),
   description: Joi.string().allow('').max(1000),
-  weight: Joi.number().min(0),
+  // The admin form's weight input has no `required`, so it's left at the
+  // form's default '' for any item without one (drinks, sets sold by
+  // piece) — .empty('') treats that as "field not sent" instead of
+  // trying (and failing) to parse '' as a number.
+  weight: Joi.number().min(0).empty(''),
   composition: Joi.string().allow('').max(1000),
   allergens: Joi.string().allow('').max(500),
   posterProductId: Joi.string().allow('').max(50),
@@ -33,7 +37,7 @@ export const updateProductSchema = Joi.object({
   priceKharkov: Joi.number().min(0),
   category: Joi.string().valid(...categories),
   description: Joi.string().allow('').max(1000),
-  weight: Joi.number().min(0),
+  weight: Joi.number().min(0).empty(''),
   composition: Joi.string().allow('').max(1000),
   allergens: Joi.string().allow('').max(500),
   posterProductId: Joi.string().allow('').max(50),
