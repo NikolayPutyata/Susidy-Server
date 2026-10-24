@@ -2,25 +2,23 @@ import { ProductsCollection } from '../db/models/products.js';
 
 export const ADDON_TYPES = ['sauce', 'ginger', 'wasabi'];
 
-// Which catalog categories grant free sauce/ginger/wasabi, and how many
-// units of each per item added — per the business rule confirmed with the
-// store owner: every roll-like category gives 1 each, a set gives 4 each,
-// drinks/other give none. Scales with quantity (2 rolls -> 2 free each).
-const SET_CATEGORIES = new Set(['sets']);
-const ROLL_LIKE_CATEGORIES = new Set([
+// Which catalog categories qualify the cart for free sauce/ginger/wasabi —
+// per the business rule confirmed with the store owner: having at least
+// one roll-like item or set in the cart unlocks a flat 8 free units of
+// each addon, regardless of how many such items or how many of each
+// (1 roll and 5 sets both grant exactly 8 — it doesn't scale). Drinks/
+// other never qualify on their own.
+const QUALIFYING_CATEGORIES = new Set([
   'rolls',
   'hotRolls',
   'bigRolls',
   'maki',
   'sushi',
   'hunkans',
+  'sets',
 ]);
 
-const freeUnitsPerItem = (category) => {
-  if (SET_CATEGORIES.has(category)) return 4;
-  if (ROLL_LIKE_CATEGORIES.has(category)) return 1;
-  return 0;
-};
+const FREE_ADDON_CAP = 8;
 
 // Loads the 3 real sauce/ginger/wasabi catalog products, keyed by
 // addonType, so a brand-new free addon line can be created with their
@@ -64,12 +62,11 @@ export const loadAddonCatalogForCity = async (city) => {
 // round-trips through here as a no-op (delta 0), including a deliberate
 // removal to zero, which is never silently re-granted on its own.
 export const recomputeAddons = (items, addonCatalog) => {
-  const freeTotals = { sauce: 0, ginger: 0, wasabi: 0 };
-  for (const item of items) {
-    if (item.addonType) continue;
-    const free = freeUnitsPerItem(item.category) * item.quantity;
-    for (const type of ADDON_TYPES) freeTotals[type] += free;
-  }
+  const qualifies = items.some(
+    (item) => !item.addonType && QUALIFYING_CATEGORIES.has(item.category),
+  );
+  const cap = qualifies ? FREE_ADDON_CAP : 0;
+  const freeTotals = { sauce: cap, ginger: cap, wasabi: cap };
 
   const result = [];
   const handled = new Set();
