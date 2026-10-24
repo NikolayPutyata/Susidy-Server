@@ -1,4 +1,5 @@
 import { model, Schema } from 'mongoose';
+import { INGREDIENT_IDS } from '../../constants/ingredients.js';
 
 const productSchema = new Schema(
   {
@@ -45,10 +46,7 @@ const productSchema = new Schema(
     // (picked with chips in the admin form, never typed) driving the roll
     // category's ingredient filters — kept separate from the free-text
     // `composition` above so filtering doesn't depend on word-matching.
-    // Validated against the dictionary in validation/products.js (Joi), not
-    // here, so documents still holding pre-dictionary free-text tags keep
-    // loading/saving until scripts/migrateIngredients.js converts them.
-    ingredients: { type: [String], default: [] },
+    ingredients: { type: [String], enum: INGREDIENT_IDS, default: [] },
     allergens: { type: String },
     // The matching product's id in Poster POS's own menu catalog — set by
     // hand per item (Poster has no stable way to match by name). Empty
