@@ -20,6 +20,10 @@ export const addToCartController = async (req, res) => {
     productName: req.body.productName,
     price: req.body.price,
     image: req.body.image,
+    weight: req.body.weight,
+    addonType: req.body.addonType ?? null,
+    category: req.body.category,
+    city: req.body.city,
   };
 
   const cart = await addToCart(reqData, req.user._id);
@@ -29,9 +33,9 @@ export const addToCartController = async (req, res) => {
 
 export const patchCartItemController = async (req, res) => {
   const { productId } = req.params;
-  const { quantity } = req.body;
+  const { quantity, city } = req.body;
 
-  const updatedCart = await updateCartItem(productId, quantity, req.user._id);
+  const updatedCart = await updateCartItem(productId, quantity, req.user._id, city);
 
   res.status(200).json({
     status: 200,
@@ -42,8 +46,9 @@ export const patchCartItemController = async (req, res) => {
 
 export const deleteCartItemController = async (req, res) => {
   const { productId } = req.params;
+  const { city } = req.query;
 
-  const updatedCart = await removeCartItem(productId, req.user._id);
+  const updatedCart = await removeCartItem(productId, req.user._id, city);
 
   res.status(200).json({
     status: 200,
@@ -73,6 +78,7 @@ export const createOrderController = async (req, res) => {
     details: req.body.details,
     noCallback: req.body.noCallback,
     paymentMethod: req.body.paymentMethod,
+    cashAmount: req.body.cashAmount,
     items: req.body.items,
   };
 

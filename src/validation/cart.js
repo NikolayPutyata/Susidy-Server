@@ -2,12 +2,24 @@ import Joi from 'joi';
 
 const timeSlotPattern = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
 
+const addonTypeSchema = Joi.string()
+  .valid('sauce', 'ginger', 'wasabi')
+  .allow(null);
+
 export const addToCartValidSchema = Joi.object({
   product_id: Joi.string().required(),
   quantity: Joi.number().min(1).required(),
   productName: Joi.string().min(1).required(),
   price: Joi.number().required(),
   image: Joi.string().allow('', null),
+  weight: Joi.number().min(0).allow(null),
+  addonType: addonTypeSchema,
+  category: Joi.string().allow('', null),
+  // Used only if this add ends up granting a NEW free sauce/ginger/wasabi
+  // line (see utils/addons.js::recomputeAddons) — picks the right city's
+  // price for it. Optional; without it a freshly auto-created line just
+  // waits for the next city-triggered reprice to get the correct price.
+  city: Joi.string().valid('kyiv', 'kharkiv'),
 });
 
 const checkoutItemSchema = Joi.object({
@@ -16,6 +28,10 @@ const checkoutItemSchema = Joi.object({
   quantity: Joi.number().min(1).required(),
   price: Joi.number().required(),
   image: Joi.string().allow('', null),
+  weight: Joi.number().min(0).allow(null),
+  addonType: addonTypeSchema,
+  category: Joi.string().allow('', null),
+  freeQuantity: Joi.number().min(0),
 });
 
 export const checkoutValidSchema = Joi.object({
@@ -68,6 +84,11 @@ export const checkoutValidSchema = Joi.object({
   details: Joi.string().allow(''),
   noCallback: Joi.boolean(),
   paymentMethod: Joi.string().valid('cod', 'online'),
+  // The amount the customer will pay with in cash, for staff to prepare
+  // change — only meaningful for paymentMethod 'cod', ignored otherwise
+  // (checked against the final total in the service, not here, since
+  // the total isn't known until items/discount/delivery fee are resolved).
+  cashAmount: Joi.number().min(0).empty('').allow(null),
   // required for guests; ignored for logged-in users (their cart in the
   // carts collection is the source of truth) — enforced in the service,
   // not here, since Joi doesn't see req.user.
@@ -76,6 +97,7 @@ export const checkoutValidSchema = Joi.object({
 
 export const updateCartItemValidSchema = Joi.object({
   quantity: Joi.number().min(1).required(),
+  city: Joi.string().valid('kyiv', 'kharkiv'),
 });
 
 export const repriceCartValidSchema = Joi.object({

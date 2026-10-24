@@ -8,7 +8,8 @@
     "lint": "eslint src/**/*.js",
     "start": "node ./src/index.js",
     "dev": "nodemon src/index.js",
-    "seed:admin": "node scripts/createAdmin.js"
+    "seed:admin": "node scripts/createAdmin.js",
+    "seed:addons": "node scripts/seedAddonProducts.js"
   },
   "keywords": [],
   "author": "Mykola Putyata <nikolayputyata@gmail.com>",
