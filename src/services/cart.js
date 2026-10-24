@@ -213,20 +213,15 @@ export const createOrder = async (
   const itemsTotal =
     Math.round(rawTotal * (1 - customer.discount / 100) * 100) / 100;
 
-  // Free-delivery threshold is based on MAIN products only (sauce/ginger/
-  // wasabi — addonType set — never count toward it, free or paid), after
-  // the same discount, before the delivery fee itself is added. Pickup
-  // never gets a delivery fee regardless of this sum.
-  const mainRawTotal = orderItems
-    .filter((item) => !item.addonType)
-    .reduce((sum, item) => sum + item.quantity * item.price, 0);
-  const mainItemsTotal =
-    Math.round(mainRawTotal * (1 - customer.discount / 100) * 100) / 100;
-
+  // Free-delivery threshold is based on the full chargeable order value —
+  // paid sauce/ginger/wasabi counts too (the customer is genuinely paying
+  // for it), while free addon units still don't inflate it, since
+  // itemsTotal above already excludes them via getChargeableQuantity.
+  // Pickup never gets a delivery fee regardless of this sum.
   const FREE_DELIVERY_THRESHOLD = 700;
   const DELIVERY_FEE = 150;
   const deliveryFee =
-    fulfillment === 'delivery' && mainItemsTotal < FREE_DELIVERY_THRESHOLD
+    fulfillment === 'delivery' && itemsTotal < FREE_DELIVERY_THRESHOLD
       ? DELIVERY_FEE
       : 0;
 
