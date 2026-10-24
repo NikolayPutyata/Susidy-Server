@@ -2,23 +2,27 @@ import { ProductsCollection } from '../db/models/products.js';
 
 export const ADDON_TYPES = ['sauce', 'ginger', 'wasabi'];
 
-// Which catalog categories qualify the cart for free sauce/ginger/wasabi —
-// per the business rule confirmed with the store owner: having at least
-// one roll-like item or set in the cart unlocks a flat 8 free units of
-// each addon, regardless of how many such items or how many of each
-// (1 roll and 5 sets both grant exactly 8 — it doesn't scale). Drinks/
-// other never qualify on their own.
-const QUALIFYING_CATEGORIES = new Set([
+// Free sauce/ginger/wasabi per the store owner's rule: each roll-like
+// item earns 1 free unit of every addon, each set earns 4, scaling with
+// quantity — but capped at 8 free units per addon type, since nobody
+// actually wants e.g. 20 sauces for 5 sets. Drinks/other earn none.
+const SET_CATEGORIES = new Set(['sets']);
+const ROLL_LIKE_CATEGORIES = new Set([
   'rolls',
   'hotRolls',
   'bigRolls',
   'maki',
   'sushi',
   'hunkans',
-  'sets',
 ]);
 
 const FREE_ADDON_CAP = 8;
+
+const freeUnitsPerItem = (category) => {
+  if (SET_CATEGORIES.has(category)) return 4;
+  if (ROLL_LIKE_CATEGORIES.has(category)) return 1;
+  return 0;
+};
 
 // Loads the 3 real sauce/ginger/wasabi catalog products, keyed by
 // addonType, so a brand-new free addon line can be created with their
@@ -61,42 +65,49 @@ export const loadAddonCatalogForCity = async (city) => {
 // edit of an addon line itself never touches `freeTotals`, so it always
 // round-trips through here as a no-op (delta 0), including a deliberate
 // removal to zero, which is never silently re-granted on its own.
+//
+// Output order is always main items first (in the order they were
+// added), then the addon lines in a fixed sauce/ginger/wasabi order — so
+// the cart and order lists never interleave addons between dishes.
 export const recomputeAddons = (items, addonCatalog) => {
-  const qualifies = items.some(
-    (item) => !item.addonType && QUALIFYING_CATEGORIES.has(item.category),
+  const earned = items.reduce(
+    (sum, item) =>
+      item.addonType ? sum : sum + freeUnitsPerItem(item.category) * item.quantity,
+    0,
   );
-  const cap = qualifies ? FREE_ADDON_CAP : 0;
-  const freeTotals = { sauce: cap, ginger: cap, wasabi: cap };
+  const free = Math.min(FREE_ADDON_CAP, earned);
 
-  const result = [];
+  const mainItems = [];
+  const addonLines = {};
   const handled = new Set();
 
   for (const item of items) {
     if (!item.addonType) {
-      result.push(item);
+      mainItems.push(item);
       continue;
     }
     if (handled.has(item.addonType)) continue;
     handled.add(item.addonType);
 
-    const newFree = freeTotals[item.addonType] || 0;
     const oldFree = item.freeQuantity || 0;
-    const delta = newFree - oldFree;
-    const quantity = Math.max(0, item.quantity + delta);
+    const quantity = Math.max(0, item.quantity + free - oldFree);
 
     if (quantity === 0) continue;
-    result.push({ ...item, quantity, freeQuantity: Math.min(newFree, quantity) });
+    addonLines[item.addonType] = {
+      ...item,
+      quantity,
+      freeQuantity: Math.min(free, quantity),
+    };
   }
 
   for (const type of ADDON_TYPES) {
     if (handled.has(type)) continue;
-    const newFree = freeTotals[type] || 0;
-    if (newFree > 0 && addonCatalog?.[type]) {
-      result.push({ ...addonCatalog[type], quantity: newFree, freeQuantity: newFree });
+    if (free > 0 && addonCatalog?.[type]) {
+      addonLines[type] = { ...addonCatalog[type], quantity: free, freeQuantity: free };
     }
   }
 
-  return result;
+  return [...mainItems, ...ADDON_TYPES.map((type) => addonLines[type]).filter(Boolean)];
 };
 
 // Free units within the addon's own allowance cost nothing — only the
