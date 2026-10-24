@@ -13,6 +13,24 @@ const categories = [
   'other',
 ];
 
+const addonTypes = ['sauce', 'ginger', 'wasabi'];
+
+// Admin form sends ingredients as a comma-separated string (plain <input>,
+// no tag-picker yet) — split/trim/drop-empties into the schema's array.
+const ingredientsSchema = Joi.alternatives()
+  .try(
+    Joi.array().items(Joi.string().min(1).max(50)),
+    Joi.string()
+      .allow('')
+      .custom((value) =>
+        value
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+      ),
+  )
+  .default([]);
+
 export const createProductSchema = Joi.object({
   name: Joi.string().min(2).max(100).required(),
   priceKiev: Joi.number().min(0).required(),
@@ -20,13 +38,21 @@ export const createProductSchema = Joi.object({
   category: Joi.string()
     .valid(...categories)
     .default('other'),
+  addonType: Joi.string()
+    .valid(...addonTypes)
+    .allow(null, '')
+    .empty('')
+    .default(null),
   description: Joi.string().allow('').max(1000),
+  nameEn: Joi.string().allow('').max(100),
+  descriptionEn: Joi.string().allow('').max(1000),
   // The admin form's weight input has no `required`, so it's left at the
   // form's default '' for any item without one (drinks, sets sold by
   // piece) — .empty('') treats that as "field not sent" instead of
   // trying (and failing) to parse '' as a number.
   weight: Joi.number().min(0).empty(''),
   composition: Joi.string().allow('').max(1000),
+  ingredients: ingredientsSchema,
   allergens: Joi.string().allow('').max(500),
   posterProductId: Joi.string().allow('').max(50),
   featured: Joi.boolean(),
@@ -43,9 +69,16 @@ export const updateProductSchema = Joi.object({
   priceKiev: Joi.number().min(0),
   priceKharkov: Joi.number().min(0),
   category: Joi.string().valid(...categories),
+  addonType: Joi.string()
+    .valid(...addonTypes)
+    .allow(null, '')
+    .empty(''),
   description: Joi.string().allow('').max(1000),
+  nameEn: Joi.string().allow('').max(100),
+  descriptionEn: Joi.string().allow('').max(1000),
   weight: Joi.number().min(0).empty(''),
   composition: Joi.string().allow('').max(1000),
+  ingredients: ingredientsSchema,
   allergens: Joi.string().allow('').max(500),
   posterProductId: Joi.string().allow('').max(50),
   featured: Joi.boolean(),

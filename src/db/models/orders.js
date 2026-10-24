@@ -36,6 +36,10 @@ const orderSchema = new Schema(
       enum: ['cod', 'online'],
       default: 'cod',
     },
+    // The amount the customer says they'll pay with in cash, so staff can
+    // prepare change — only meaningful for paymentMethod 'cod', set when
+    // the customer filled in the "Підготувати решту з суми" field.
+    cashAmount: { type: Number },
     items: [
       {
         product_id: String,
@@ -43,9 +47,14 @@ const orderSchema = new Schema(
         quantity: Number,
         price: Number,
         image: String,
+        weight: Number,
+        addonType: { type: String, enum: ['sauce', 'ginger', 'wasabi'], default: null },
         _id: false,
       },
     ],
+    // Flat 150 UAH, or 0 for pickup / once main-item total reaches the
+    // free-delivery threshold — see services/cart.js::createOrder.
+    deliveryFee: { type: Number, default: 0 },
     total: Number,
   },
   { timestamps: true, versionKey: false },

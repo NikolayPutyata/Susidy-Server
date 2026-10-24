@@ -21,13 +21,31 @@ const productSchema = new Schema(
       default: 'other',
       required: true,
     },
+    // Marks this item as sauce/ginger/wasabi so the cart's free-addon
+    // auto-add system (see services/cart.js) can recognize it generically
+    // instead of matching on name — null for every ordinary product.
+    addonType: {
+      type: String,
+      enum: ['sauce', 'ginger', 'wasabi'],
+      default: null,
+    },
     images: { type: [String], required: true },
     description: { type: String },
+    // English translations shown when the site is switched to EN — falls
+    // back to the Ukrainian name/description client-side while unset, so
+    // these are optional and filled in by hand per item.
+    nameEn: { type: String },
+    descriptionEn: { type: String },
     weight: { type: Number },
     // Ingredients — for a set, the admin lists the rolls/items it's made
     // of here too, as free text (no structured reference to other
     // products — simplest way to describe a set's contents).
     composition: { type: String },
+    // Structured tags (e.g. 'cheese', 'shrimp', 'salmon', 'eel', 'mayo')
+    // driving the roll category's ingredient filters — kept separate from
+    // the free-text `composition` above so filtering doesn't depend on
+    // word-matching inside prose.
+    ingredients: { type: [String], default: [] },
     allergens: { type: String },
     // The matching product's id in Poster POS's own menu catalog — set by
     // hand per item (Poster has no stable way to match by name). Empty

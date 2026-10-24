@@ -18,7 +18,7 @@ export const getMyCart = async (userId) => {
 };
 
 export const addToCart = async (
-  { product_id, quantity, productName, price, image },
+  { product_id, quantity, productName, price, image, weight, addonType },
   userId,
 ) => {
   let cart = await CartsCollection.findOneAndUpdate(
@@ -30,7 +30,11 @@ export const addToCart = async (
   if (!cart) {
     cart = await CartsCollection.findOneAndUpdate(
       { user_id: String(userId) },
-      { $push: { items: { product_id, quantity, productName, price, image } } },
+      {
+        $push: {
+          items: { product_id, quantity, productName, price, image, weight, addonType },
+        },
+      },
       { new: true, upsert: true },
     );
   }
@@ -111,6 +115,7 @@ export const createOrder = async (
     details,
     noCallback,
     paymentMethod,
+    cashAmount,
     items,
   },
   user,
@@ -176,8 +181,37 @@ export const createOrder = async (
     (sum, item) => sum + item.quantity * item.price,
     0,
   );
-  const total =
+  const itemsTotal =
     Math.round(rawTotal * (1 - customer.discount / 100) * 100) / 100;
+
+  // Free-delivery threshold is based on MAIN products only (sauce/ginger/
+  // wasabi — addonType set — never count toward it, free or paid), after
+  // the same discount, before the delivery fee itself is added. Pickup
+  // never gets a delivery fee regardless of this sum.
+  const mainRawTotal = orderItems
+    .filter((item) => !item.addonType)
+    .reduce((sum, item) => sum + item.quantity * item.price, 0);
+  const mainItemsTotal =
+    Math.round(mainRawTotal * (1 - customer.discount / 100) * 100) / 100;
+
+  const FREE_DELIVERY_THRESHOLD = 700;
+  const DELIVERY_FEE = 150;
+  const deliveryFee =
+    fulfillment === 'delivery' && mainItemsTotal < FREE_DELIVERY_THRESHOLD
+      ? DELIVERY_FEE
+      : 0;
+
+  const total = itemsTotal + deliveryFee;
+
+  // Defensive server-side check mirroring the client's own validation —
+  // never trust a client-supplied cash amount that wouldn't actually
+  // cover the order, and it's only meaningful for cash-on-delivery.
+  if (paymentMethod === 'cod' && typeof cashAmount === 'number' && cashAmount < total) {
+    throw createHttpError(
+      400,
+      `Сума готівки менша за суму замовлення (${total} ₴)`,
+    );
+  }
 
   const order = await OrdersCollection.create({
     user_id: customer._id,
@@ -201,7 +235,9 @@ export const createOrder = async (
     details,
     noCallback,
     paymentMethod,
+    cashAmount: paymentMethod === 'cod' ? cashAmount : undefined,
     items: orderItems,
+    deliveryFee,
     total,
   });
 

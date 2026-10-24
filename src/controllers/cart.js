@@ -20,6 +20,8 @@ export const addToCartController = async (req, res) => {
     productName: req.body.productName,
     price: req.body.price,
     image: req.body.image,
+    weight: req.body.weight,
+    addonType: req.body.addonType ?? null,
   };
 
   const cart = await addToCart(reqData, req.user._id);
