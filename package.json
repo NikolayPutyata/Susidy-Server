@@ -9,7 +9,8 @@
     "start": "node ./src/index.js",
     "dev": "nodemon src/index.js",
     "seed:admin": "node scripts/createAdmin.js",
-    "seed:addons": "node scripts/seedAddonProducts.js"
+    "seed:addons": "node scripts/seedAddonProducts.js",
+    "migrate:ingredients": "node scripts/migrateIngredients.js"
   },
   "keywords": [],
   "author": "Mykola Putyata <nikolayputyata@gmail.com>",
