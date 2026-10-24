@@ -49,6 +49,8 @@ const orderSchema = new Schema(
         image: String,
         weight: Number,
         addonType: { type: String, enum: ['sauce', 'ginger', 'wasabi'], default: null },
+        category: String,
+        freeQuantity: { type: Number, default: 0 },
         _id: false,
       },
     ],

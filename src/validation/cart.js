@@ -14,6 +14,12 @@ export const addToCartValidSchema = Joi.object({
   image: Joi.string().allow('', null),
   weight: Joi.number().min(0).allow(null),
   addonType: addonTypeSchema,
+  category: Joi.string().allow('', null),
+  // Used only if this add ends up granting a NEW free sauce/ginger/wasabi
+  // line (see utils/addons.js::recomputeAddons) — picks the right city's
+  // price for it. Optional; without it a freshly auto-created line just
+  // waits for the next city-triggered reprice to get the correct price.
+  city: Joi.string().valid('kyiv', 'kharkiv'),
 });
 
 const checkoutItemSchema = Joi.object({
@@ -24,6 +30,8 @@ const checkoutItemSchema = Joi.object({
   image: Joi.string().allow('', null),
   weight: Joi.number().min(0).allow(null),
   addonType: addonTypeSchema,
+  category: Joi.string().allow('', null),
+  freeQuantity: Joi.number().min(0),
 });
 
 export const checkoutValidSchema = Joi.object({
@@ -89,6 +97,7 @@ export const checkoutValidSchema = Joi.object({
 
 export const updateCartItemValidSchema = Joi.object({
   quantity: Joi.number().min(1).required(),
+  city: Joi.string().valid('kyiv', 'kharkiv'),
 });
 
 export const repriceCartValidSchema = Joi.object({

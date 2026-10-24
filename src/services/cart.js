@@ -6,6 +6,7 @@ import { sendOrderToTelegram } from '../utils/telegramSender.js';
 import { sendOrderToPoster } from '../utils/posterSender.js';
 import { findOrCreateUserByPhone } from './users.js';
 import { findServingPoint } from './locations.js';
+import { getChargeableQuantity, loadAddonCatalogForCity, recomputeAddons } from '../utils/addons.js';
 
 export const getMyCart = async (userId) => {
   const cart = await CartsCollection.findOne({ user_id: String(userId) });
@@ -18,7 +19,7 @@ export const getMyCart = async (userId) => {
 };
 
 export const addToCart = async (
-  { product_id, quantity, productName, price, image, weight, addonType },
+  { product_id, quantity, productName, price, image, weight, addonType, category, city },
   userId,
 ) => {
   let cart = await CartsCollection.findOneAndUpdate(
@@ -32,17 +33,24 @@ export const addToCart = async (
       { user_id: String(userId) },
       {
         $push: {
-          items: { product_id, quantity, productName, price, image, weight, addonType },
+          items: { product_id, quantity, productName, price, image, weight, addonType, category },
         },
       },
       { new: true, upsert: true },
     );
   }
 
+  // Adding/incrementing is never a removal, so recomputing here can only
+  // ever grant or top up free addon lines — never resurrects a deliberate
+  // removal (see utils/addons.js).
+  const addonCatalog = await loadAddonCatalogForCity(city);
+  cart.items = recomputeAddons(cart.items, addonCatalog);
+  await cart.save();
+
   return cart;
 };
 
-export const updateCartItem = async (productId, quantity, userId) => {
+export const updateCartItem = async (productId, quantity, userId, city) => {
   const cart = await CartsCollection.findOneAndUpdate(
     { user_id: String(userId), 'items.product_id': productId },
     { $set: { 'items.$.quantity': quantity } },
@@ -52,6 +60,12 @@ export const updateCartItem = async (productId, quantity, userId) => {
   if (!cart) {
     throw createHttpError(404, 'Item not found in cart');
   }
+
+  // Same reasoning as addToCart — a quantity SET (never a full removal)
+  // is always safe to recompute from.
+  const addonCatalog = await loadAddonCatalogForCity(city);
+  cart.items = recomputeAddons(cart.items, addonCatalog);
+  await cart.save();
 
   return cart;
 };
@@ -80,7 +94,10 @@ export const repriceCart = async (items, userId) => {
   return cart;
 };
 
-export const removeCartItem = async (productId, userId) => {
+export const removeCartItem = async (productId, userId, city) => {
+  const cartBefore = await CartsCollection.findOne({ user_id: String(userId) });
+  const removedItem = cartBefore?.items.find((item) => item.product_id === productId);
+
   const cart = await CartsCollection.findOneAndUpdate(
     { user_id: String(userId) },
     { $pull: { items: { product_id: productId } } },
@@ -89,6 +106,16 @@ export const removeCartItem = async (productId, userId) => {
 
   if (!cart) {
     throw createHttpError(404, 'Cart not found');
+  }
+
+  // Only a MAIN item's removal should shrink/clear its linked addons — a
+  // deliberate removal of an addon line itself (e.g. the customer doesn't
+  // want sauce at all) must stick, not get silently re-granted by the
+  // next unrelated recompute (see utils/addons.js).
+  if (removedItem && !removedItem.addonType) {
+    const addonCatalog = await loadAddonCatalogForCity(city);
+    cart.items = recomputeAddons(cart.items, addonCatalog);
+    await cart.save();
   }
 
   return cart;
@@ -177,8 +204,10 @@ export const createOrder = async (
 
   const customer = user ?? (await findOrCreateUserByPhone({ name, phoneNumber }));
 
+  // Free sauce/ginger/wasabi units never get charged — only the quantity
+  // beyond each line's own free allowance does (see utils/addons.js).
   const rawTotal = orderItems.reduce(
-    (sum, item) => sum + item.quantity * item.price,
+    (sum, item) => sum + getChargeableQuantity(item) * item.price,
     0,
   );
   const itemsTotal =
