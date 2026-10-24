@@ -1,5 +1,6 @@
 import Joi from 'joi';
 import { PICKUP_POINT_IDS } from '../constants/index.js';
+import { INGREDIENT_IDS } from '../constants/ingredients.js';
 
 const categories = [
   'rolls',
@@ -15,19 +16,33 @@ const categories = [
 
 const addonTypes = ['sauce', 'ginger', 'wasabi'];
 
-// Admin form sends ingredients as a comma-separated string (plain <input>,
-// no tag-picker yet) — split/trim/drop-empties into the schema's array.
+// Ingredients come from the admin form's chip selector as a
+// comma-separated list of ids (multipart form, so no real arrays) — split
+// it, then accept only ids from the fixed dictionary, so the roll filters
+// never see a typo or free-text variant.
+const ingredientIdSchema = Joi.string().valid(...INGREDIENT_IDS);
+
 const ingredientsSchema = Joi.alternatives()
   .try(
-    Joi.array().items(Joi.string().min(1).max(50)),
+    Joi.array().items(ingredientIdSchema).unique(),
+    // '' = every chip deselected — has to become [] (not '', which
+    // Mongoose would store as [''])
     Joi.string()
-      .allow('')
-      .custom((value) =>
-        value
-          .split(',')
-          .map((tag) => tag.trim())
-          .filter(Boolean),
-      ),
+      .empty('')
+      .default([])
+      .custom((value, helpers) => {
+        const ids = [
+          ...new Set(
+            value
+              .split(',')
+              .map((id) => id.trim())
+              .filter(Boolean),
+          ),
+        ];
+        const unknown = ids.find((id) => !INGREDIENT_IDS.includes(id));
+        if (unknown) return helpers.message(`Невідомий інгредієнт: ${unknown}`);
+        return ids;
+      }),
   )
   .default([]);
 
