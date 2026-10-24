@@ -75,6 +75,7 @@ export const createOrderController = async (req, res) => {
     details: req.body.details,
     noCallback: req.body.noCallback,
     paymentMethod: req.body.paymentMethod,
+    cashAmount: req.body.cashAmount,
     items: req.body.items,
   };
 
