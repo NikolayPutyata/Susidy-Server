@@ -16,6 +16,11 @@ const allowedOrigins = getEnvVar('CLIENT_ORIGIN', '')
 export const startServer = () => {
   const app = express();
 
+  // Behind DigitalOcean's load balancer / a reverse proxy — take the
+  // client's IP from the first X-Forwarded-For hop, so the per-IP SMS rate
+  // limit (services/sms.js) sees real visitors, not the proxy.
+  app.set('trust proxy', 1);
+
   app.use(express.json());
   app.use(
     cors({

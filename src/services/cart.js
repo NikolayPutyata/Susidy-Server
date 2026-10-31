@@ -263,7 +263,10 @@ export const createOrder = async (
     cutlery,
     trainingChopsticks,
     details,
-    noCallback,
+    // "Don't call me back" is only honoured for registered users whose
+    // phone was confirmed by SMS — a guest's number is unverified, so staff
+    // must be able to call it.
+    noCallback: Boolean(user?.phoneVerified && noCallback),
     paymentMethod,
     cashAmount: paymentMethod === 'cod' ? cashAmount : undefined,
     items: orderItems,

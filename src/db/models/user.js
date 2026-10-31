@@ -7,6 +7,9 @@ const usersSchema = new Schema(
     password: { type: String },
     city: { type: String },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    // Set once the phone was confirmed with an SMS code at registration —
+    // only such users may ask not to be called back (services/cart.js).
+    phoneVerified: { type: Boolean, default: false },
     discount: { type: Number, default: 0, min: 0, max: 100 },
     // Settable once at the user's own choice; service layer rejects any
     // further change once this is non-null.

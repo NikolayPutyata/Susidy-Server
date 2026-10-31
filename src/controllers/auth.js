@@ -4,7 +4,9 @@ import {
   logoutUser,
   refreshUsersSession,
   registerUser,
+  resetPassword,
 } from '../services/auth.js';
+import { requestSmsCode } from '../services/sms.js';
 import { getSessionCookieOptions } from '../utils/cookies.js';
 
 export const registerUserController = async (req, res) => {
@@ -13,6 +15,7 @@ export const registerUserController = async (req, res) => {
     phoneNumber: req.body.phoneNumber,
     password: req.body.password,
     city: req.body.city,
+    code: req.body.code,
   };
 
   const user = await registerUser(reqData);
@@ -87,4 +90,24 @@ export const refreshUserSessionController = async (req, res) => {
 
 export const getMeController = async (req, res) => {
   res.json({ status: 200, data: req.user });
+};
+
+export const requestSmsCodeController = async (req, res) => {
+  const data = await requestSmsCode({
+    phoneNumber: req.body.phoneNumber,
+    purpose: req.body.purpose,
+    ip: req.ip,
+  });
+
+  res.status(200).json({ status: 200, data });
+};
+
+export const resetPasswordController = async (req, res) => {
+  await resetPassword({
+    phoneNumber: req.body.phoneNumber,
+    code: req.body.code,
+    password: req.body.password,
+  });
+
+  res.status(200).json({ status: 200, message: 'Password updated' });
 };
