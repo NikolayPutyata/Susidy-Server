@@ -75,6 +75,7 @@ export const createOrderController = async (req, res) => {
     deliveryLng: req.body.deliveryLng,
     requestedTime: req.body.requestedTime,
     cutlery: req.body.cutlery,
+    trainingChopsticks: req.body.trainingChopsticks,
     details: req.body.details,
     noCallback: req.body.noCallback,
     paymentMethod: req.body.paymentMethod,

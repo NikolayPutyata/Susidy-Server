@@ -1,5 +1,5 @@
 import { Telegraf } from 'telegraf';
-import { CITY_LABELS } from '../constants/index.js';
+import { CITY_LABELS, PICKUP_POINTS } from '../constants/index.js';
 
 const defaultBot = {
   token: process.env.TELEGRAM_KEY,
@@ -32,6 +32,15 @@ const pointBots = {
     token: process.env.TELEGRAM_KEY_KHARKIV_SVOBODY,
     chatId: process.env.TELEGRAM_CHAT_ID_KHARKIV_SVOBODY,
   },
+};
+
+// The owner's private bot — a copy of every order from every point lands
+// here, regardless of which per-point/default bot handled it above. Not the
+// same as the default bot (that one is the admins' shared fallback group).
+// Leave both blank to turn the copy off.
+const ownerBot = {
+  token: process.env.TELEGRAM_KEY_OWNER,
+  chatId: process.env.TELEGRAM_CHAT_ID_OWNER,
 };
 
 const botInstances = new Map();
@@ -89,32 +98,60 @@ const sendVia = ({ token, chatId }, message) =>
     parse_mode: 'Markdown',
   });
 
+const formatCutlery = (data) => {
+  const count = data.cutlery ?? 0;
+  return data.trainingChopsticks
+    ? `${count} + навчальні палички`
+    : String(count);
+};
+
+const formatPayment = (data) => {
+  if (data.paymentMethod === 'online') return 'Онлайн';
+  if (data.cashAmount) {
+    return `При отриманні, готівка ${data.cashAmount} грн — решта ${data.cashAmount - data.total} грн`;
+  }
+  return 'При отриманні';
+};
+
+const formatPoint = (data) => {
+  const point = PICKUP_POINTS.find((p) => p.id === data.pickupPointId);
+  return point
+    ? `${CITY_LABELS[point.city]}, ${point.address}`
+    : 'не визначено';
+};
+
+const buildOrderMessage = (data) =>
+  [
+    '🛒 Замовлення',
+    '',
+    `👤 Ім'я: ${data.name}`,
+    `📞 Телефон: [${data.phoneNumber}](tel:${data.phoneNumber})`,
+    `🚚 ${formatFulfillment(data)}`,
+    // Pickup already names its point in the line above.
+    data.fulfillment === 'delivery'
+      ? `📍 Готує точка: ${formatPoint(data)}`
+      : null,
+    `🕒 Час: ${formatRequestedTime(data)}`,
+    `🥢 Прибори: ${formatCutlery(data)}`,
+    `📝 Деталі: ${data.details || 'Не вказані'}`,
+    `💳 Оплата: ${formatPayment(data)}`,
+    data.noCallback ? '🔕 Просив(ла) не передзвонювати' : null,
+    '',
+    '🍣 *Товари*:',
+    ...data.items.map(
+      (item) => `- ${item.productName} x${item.quantity} по ${item.price} грн`,
+    ),
+    '',
+    data.deliveryFee ? `🚗 Доставка: ${data.deliveryFee} грн` : null,
+    `💰 Разом: ${data.total} грн`,
+    '',
+    `⏳ *Дата замовлення*: ${new Date(data.createdAt).toLocaleString('uk-UA', { timeZone: 'Europe/Kyiv' })}`,
+  ]
+    .filter((line) => line !== null)
+    .join('\n');
+
 export const sendOrderToTelegram = async (data) => {
-  const orderMessage = `
-    🛒 Замовлення
-
-    👤 Ім'я: ${data.name}
-    📞 Телефон: [${data.phoneNumber}](tel:${data.phoneNumber})
-    🚚 ${formatFulfillment(data)}
-    🕒 Час: ${formatRequestedTime(data)}
-    🍴 Приборів: ${data.cutlery || 1}
-    📝 Деталі: ${data.details || 'Не вказані'}
-    💳 Оплата: ${data.paymentMethod === 'online' ? 'Онлайн' : 'При отриманні'}
-    ${data.noCallback ? '🔕 Просив(ла) не передзвонювати' : ''}
-
-    🍣 **Товари**:
-    ${data.items
-      .map(
-        (item) => `
-      - ${item.productName} x${item.quantity} по ${item.price} грн
-    `,
-      )
-      .join('')}
-
-    💰 Разом: ${data.total} грн
-
-    ⏳ **Дата замовлення**: ${new Date(data.createdAt).toLocaleString()}
-  `;
+  const orderMessage = buildOrderMessage(data);
 
   const primary = resolveBot(data);
 
@@ -135,4 +172,9 @@ export const sendOrderToTelegram = async (data) => {
     );
     return await sendVia(defaultBot, orderMessage);
   }
+};
+
+export const sendOrderToOwnerTelegram = async (data) => {
+  if (!ownerBot.token || !ownerBot.chatId) return;
+  return await sendVia(ownerBot, buildOrderMessage(data));
 };

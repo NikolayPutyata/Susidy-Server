@@ -2,10 +2,14 @@ import createHttpError from 'http-errors';
 import { CartsCollection } from '../db/models/carts.js';
 import { OrdersCollection } from '../db/models/orders.js';
 import { ProductsCollection } from '../db/models/products.js';
-import { sendOrderToTelegram } from '../utils/telegramSender.js';
+import {
+  sendOrderToOwnerTelegram,
+  sendOrderToTelegram,
+} from '../utils/telegramSender.js';
 import { sendOrderToPoster } from '../utils/posterSender.js';
 import { findOrCreateUserByPhone } from './users.js';
 import { findServingPoint } from './locations.js';
+import { saveBackupContact } from '../db/backupContacts.js';
 import { getChargeableQuantity, loadAddonCatalogForCity, recomputeAddons } from '../utils/addons.js';
 
 export const getMyCart = async (userId) => {
@@ -139,6 +143,7 @@ export const createOrder = async (
     deliveryLng,
     requestedTime,
     cutlery,
+    trainingChopsticks,
     details,
     noCallback,
     paymentMethod,
@@ -256,6 +261,7 @@ export const createOrder = async (
       : undefined,
     requestedTime,
     cutlery,
+    trainingChopsticks,
     details,
     noCallback,
     paymentMethod,
@@ -265,17 +271,20 @@ export const createOrder = async (
     total,
   });
 
-  try {
-    await sendOrderToTelegram(order);
-  } catch (err) {
-    console.error('Failed to send order notification to Telegram', err);
-  }
-
-  try {
-    await sendOrderToPoster(order);
-  } catch (err) {
-    console.error('Failed to push order to Poster', err);
-  }
+  // Side effects of a placed order — independent of each other, so they run
+  // in parallel, and none of them may fail the order itself.
+  const sideEffects = [
+    ['send order notification to Telegram', sendOrderToTelegram(order)],
+    ["send order copy to the owner's Telegram", sendOrderToOwnerTelegram(order)],
+    ['push order to Poster', sendOrderToPoster(order)],
+    ['save contact to the backup DB', saveBackupContact({ name, phoneNumber })],
+  ];
+  const results = await Promise.allSettled(sideEffects.map(([, p]) => p));
+  results.forEach((result, i) => {
+    if (result.status === 'rejected') {
+      console.error(`Failed to ${sideEffects[i][0]}`, result.reason);
+    }
+  });
 
   if (user) {
     await CartsCollection.deleteOne({ user_id: String(user._id) });

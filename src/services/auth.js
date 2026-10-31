@@ -5,6 +5,15 @@ import { isValidObjectId } from 'mongoose';
 import { SessionsCollection } from '../db/models/sessions.js';
 import { randomBytes } from 'crypto';
 import { FIFTEEN_MINUTES, SESSION_DURATION } from '../constants/index.js';
+import { saveBackupContact } from '../db/backupContacts.js';
+
+const backupContact = async (contact) => {
+  try {
+    await saveBackupContact(contact);
+  } catch (err) {
+    console.error('Failed to save contact to the backup DB', err);
+  }
+};
 
 export const registerUser = async (payload) => {
   const { name, phoneNumber, password, city } = payload;
@@ -19,15 +28,19 @@ export const registerUser = async (payload) => {
     }
 
     existingUser.set({ name, password: encryptedPassword, city });
-    return await existingUser.save();
+    const user = await existingUser.save();
+    await backupContact({ name, phoneNumber });
+    return user;
   }
 
-  return await UsersCollection.create({
+  const user = await UsersCollection.create({
     name,
     phoneNumber,
     password: encryptedPassword,
     city,
   });
+  await backupContact({ name, phoneNumber });
+  return user;
 };
 
 export const loginUser = async (payload) => {
