@@ -6,6 +6,7 @@ import { SessionsCollection } from '../db/models/sessions.js';
 import { randomBytes } from 'crypto';
 import { FIFTEEN_MINUTES, SESSION_DURATION } from '../constants/index.js';
 import { saveBackupContact } from '../db/backupContacts.js';
+import { consumeSmsCode } from './sms.js';
 
 const backupContact = async (contact) => {
   try {
@@ -16,18 +17,25 @@ const backupContact = async (contact) => {
 };
 
 export const registerUser = async (payload) => {
-  const { name, phoneNumber, password, city } = payload;
+  const { name, phoneNumber, password, city, code } = payload;
 
   const existingUser = await UsersCollection.findOne({ phoneNumber });
+
+  if (existingUser?.password) {
+    throw createHttpError(409, 'Цей номер уже зареєстрований — увійдіть');
+  }
+
+  await consumeSmsCode({ phoneNumber, purpose: 'register', code });
 
   const encryptedPassword = await bcrypt.hash(password, 10);
 
   if (existingUser) {
-    if (existingUser.password) {
-      throw createHttpError(409, 'Phone number already registered');
-    }
-
-    existingUser.set({ name, password: encryptedPassword, city });
+    existingUser.set({
+      name,
+      password: encryptedPassword,
+      city,
+      phoneVerified: true,
+    });
     const user = await existingUser.save();
     await backupContact({ name, phoneNumber });
     return user;
@@ -38,9 +46,30 @@ export const registerUser = async (payload) => {
     phoneNumber,
     password: encryptedPassword,
     city,
+    phoneVerified: true,
   });
   await backupContact({ name, phoneNumber });
   return user;
+};
+
+// "Forgot password": the SMS code proves the phone, then the new password
+// replaces the old one and every existing session is ended, so whoever
+// might have had the old password is logged out everywhere.
+export const resetPassword = async ({ phoneNumber, code, password }) => {
+  const user = await UsersCollection.findOne({ phoneNumber });
+
+  if (!user?.password) {
+    throw createHttpError(404, 'Користувача з таким номером не знайдено');
+  }
+
+  await consumeSmsCode({ phoneNumber, purpose: 'reset', code });
+
+  user.set({
+    password: await bcrypt.hash(password, 10),
+    phoneVerified: true,
+  });
+  await user.save();
+  await SessionsCollection.deleteMany({ userId: user._id });
 };
 
 export const loginUser = async (payload) => {

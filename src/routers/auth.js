@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import { validateBody } from '../middlewares/validateBody.js';
-import { loginUserSchema, registerUserSchema } from '../validation/auth.js';
+import {
+  loginUserSchema,
+  registerUserSchema,
+  requestSmsCodeSchema,
+  resetPasswordSchema,
+} from '../validation/auth.js';
 import {
   birthdayUpdateSchema,
   savedAddressSchema,
@@ -15,6 +20,8 @@ import {
   logoutUserController,
   refreshUserSessionController,
   registerUserController,
+  requestSmsCodeController,
+  resetPasswordController,
 } from '../controllers/auth.js';
 import {
   addMyFavoriteController,
@@ -77,6 +84,18 @@ router.patch(
   requireAuth,
   isValidId('addressId'),
   ctrlWrapper(setMyDefaultSavedAddressController),
+);
+
+router.post(
+  '/sms/send',
+  validateBody(requestSmsCodeSchema),
+  ctrlWrapper(requestSmsCodeController),
+);
+
+router.post(
+  '/password/reset',
+  validateBody(resetPasswordSchema),
+  ctrlWrapper(resetPasswordController),
 );
 
 router.post(
