@@ -80,7 +80,8 @@ export const checkoutValidSchema = Joi.object({
       }
       return value;
     }),
-  cutlery: Joi.number().integer().min(1).max(20),
+  cutlery: Joi.number().integer().min(0).max(20),
+  trainingChopsticks: Joi.boolean(),
   details: Joi.string().allow(''),
   noCallback: Joi.boolean(),
   paymentMethod: Joi.string().valid('cod', 'online'),

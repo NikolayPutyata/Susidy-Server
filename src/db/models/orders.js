@@ -28,7 +28,10 @@ const orderSchema = new Schema(
       _id: false,
     },
     requestedTime: { type: String },
-    cutlery: { type: Number, default: 1 },
+    cutlery: { type: Number, default: 0 },
+    // Customer asked for training (beginner) chopsticks — shown to staff in
+    // the Telegram notification and the admin orders page.
+    trainingChopsticks: { type: Boolean, default: false },
     details: { type: String },
     noCallback: { type: Boolean, default: false },
     paymentMethod: {

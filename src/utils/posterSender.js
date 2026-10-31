@@ -98,7 +98,12 @@ export const sendOrderToPoster = async (order) => {
     last_name: rest.join(' ') || undefined,
     phone: order.phoneNumber,
     address: addressLine,
-    comment: order.details || undefined,
+    comment: [
+      `Прибори: ${order.cutlery ?? 0}${order.trainingChopsticks ? ' + навчальні палички' : ''}`,
+      order.details,
+    ]
+      .filter(Boolean)
+      .join('. '),
     products: order.items.map((item) => ({
       product_id: Number(posterIdByProductId.get(item.product_id)),
       count: item.quantity,
