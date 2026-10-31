@@ -17,7 +17,15 @@ const ensureConfigured = () => {
 const uploadImageBuffer = (buffer) =>
   new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder: 'susidy-products' },
+      {
+        folder: 'susidy-products',
+        // Stored originals are capped at 1600px on the longer side (never
+        // upscaled) — the site never shows anything wider, and phone photos
+        // straight from the camera are often 4000px+ and several MB. The
+        // client then requests smaller WebP/AVIF variants on the fly
+        // (f_auto,q_auto,w_… in the URL), see src/lib/images.js there.
+        transformation: [{ width: 1600, height: 1600, crop: 'limit' }],
+      },
       (error, result) => {
         if (error) return reject(error);
         resolve(result.secure_url);
