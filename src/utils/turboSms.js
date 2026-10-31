@@ -20,7 +20,8 @@ export const sendSms = async (phoneNumber, text) => {
   const token = process.env.TURBOSMS_TOKEN;
   const sender = process.env.TURBOSMS_SENDER;
   if (!token || !sender) {
-    throw createHttpError(503, 'Надсилання SMS ще не налаштовано');
+    // 4xx on purpose — see the note on 424 in services/sms.js.
+    throw createHttpError(424, 'Надсилання SMS ще не налаштовано');
   }
 
   const response = await fetch(API_URL, {

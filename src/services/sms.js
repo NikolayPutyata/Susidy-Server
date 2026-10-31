@@ -58,7 +58,7 @@ const enforceRateLimits = async (phoneNumber, ip) => {
   if (total >= dailyLimit()) {
     console.error(`SMS daily limit (${dailyLimit()}) reached`);
     throw createHttpError(
-      503,
+      429,
       'Надсилання SMS тимчасово недоступне — спробуйте пізніше',
     );
   }
@@ -95,7 +95,10 @@ export const requestSmsCode = async ({ phoneNumber, purpose, ip }) => {
     await SmsCodesCollection.deleteOne({ phoneNumber, purpose });
     if (err.status) throw err;
     console.error('Failed to send SMS', err);
-    throw createHttpError(502, 'Не вдалося надіслати SMS — спробуйте ще раз');
+    // 424, not 502/503: DigitalOcean's edge (Cloudflare) replaces 5xx
+    // bodies with its own, so the customer would only see a generic
+    // "Сталася помилка" instead of this message.
+    throw createHttpError(424, 'Не вдалося надіслати SMS — спробуйте ще раз');
   }
 
   await SmsSendsCollection.create({ phoneNumber, ip });
